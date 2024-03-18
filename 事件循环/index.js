@@ -105,3 +105,5 @@ function d(du) {
   while (new Date().getTime() - startTime < du) {}
 }
 d(3000)
+
+// 事件循环的机制是从消息队列里拿任务
