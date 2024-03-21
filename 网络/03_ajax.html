@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <script>
+    /**
+     * AJAX 是什么？
+     * 浏览器能够网络通信发送网络请求，在过去的时候并没有把这种能力暴露给 JS，所以 JS 在过去的时候是不能发送网络请求的，
+     * 现在 浏览器已经暴露给 JS，可以利用 JS 里面的一套 API，通过这套 API能够使 JS 具备网络通信的能力。
+     * 简单来说就是：AJAX 就是在 JS 里面使用一套 API 来发送网络请求，获取响应的结果。
+     **/
+    /**
+     * IE 使用了一套 API 来完成请求的发送，这套 API 主要依靠一个构造函数完成，该构造函数的名称为 XMLHttpRequest，简称为 XHR，
+     * 所以这套 API 又称为 XHR API
+     * 
+     * 由于 XHR API 有着诸多缺陷，在 HTML5 和 ES6 发布之后，产生了一套更完善的 API 来发送请求，这套 API 主要使用的是一个叫做
+     * fetch 的函数，因此这套 API 又称之为 Fetch API
+     * 
+     * 无论是 XHR 还是 Fetch，他们都是实现 ajax 的技术手段，只是 API 不同。
+    */
+
+    const xhr = new XMLHttpRequest()
+    xhr.onreadystatechange = function () {
+      // 当请求状态发生改变时运行的函数
+      // xhr.readyState：一个数字，用于判断请求到了哪个阶段
+      // 1数字：open 放大已被调用
+      // 2数字：send 方法已被调用
+      // 3数字：正在接收服务器的响应消息体
+      // 4数字：服务器响应的所有内容均已接收完毕
+      // xhr.responseText：获取服务器响应的消息体文本
+      // xhr.getResponseHeader("Content-Type") 获取响应头 Content-Type
+      if (xhr.readyState === 4) {
+        console.log(xhr.responseText)
+      }
+    }
+    // 配置请求
+    xhr.open('GET', 'https://dengwj.vip')
+    // 设置请求头
+    // xhr.setRequestHeader('Content-Type', 'application/json')
+    // 构建请求体，发送到服务器，如果没有请求体，传递 null
+    xhr.send(null)
+  </script>
+</body>
+
+</html>
