@@ -45,6 +45,26 @@
     // xhr.setRequestHeader('Content-Type', 'application/json')
     // 构建请求体，发送到服务器，如果没有请求体，传递 null
     xhr.send(null)
+
+    // fetch 默认是 get 请求 
+    // fetch('http://ww.com')
+    // fetch 返回一个 Promise，当收到服务器的响应头之后，Promise 完成，完成之后会给予一个对象
+    fetch('http://ww.com', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        other: 'ww'
+      },
+      body: JSON.stringify({
+        name: '朴睦',
+        age: 24
+      })
+    }).then((res) => {
+      // 这里是返回响应体数据，是个 Promise
+      return res.json()
+    }).then((data) => {
+      console.log("我是响应体返回的数据", data)
+    })
   </script>
 </body>
 
