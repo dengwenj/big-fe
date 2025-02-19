@@ -7,9 +7,11 @@
  * 2、调用实例上指定的方法
  * 3、销毁这个实例
  */
-var str = new String("hello")
+var str = "hello"
 str.charAt(0)
-str = null
+// var str = new String("hello")
+// str.charAt(0)
+// str = null
 
 var num = new Number(1)
 
