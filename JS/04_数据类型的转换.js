@@ -36,3 +36,30 @@ console.log(typeof obj.toString())
 const arr = [1]
 console.log(arr.valueOf())
 console.log(arr.toString())
+
+// var a = ?
+var a = {
+  n: 1,
+  toString() {
+    return a.n++ 
+  }
+}
+var a = {
+  n: 1,
+  valueOf() {
+    return a.n++
+  }
+}
+if (a == 1 && a == 2 && a == 3) {
+  console.log("进")
+}
+// a 为什么值时会进入 if 里面
+
+// 定义一个数组 a
+var ww = [1, 2, 3];
+// 重写数组的 join 方法
+ww.join = ww.shift;
+// 进行条件判断
+if (ww == 1 && ww == 2 && ww == 3) {
+  console.log("进");
+}
