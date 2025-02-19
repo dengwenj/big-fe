@@ -50,3 +50,4 @@ p2.show()
 console.log(Person.__proto__ === Object.__proto__) // true，都是 Function 的原型对象
 console.log(Person.__proto__ === Function.prototype) // true
 console.log(p1.__proto__.__proto__.__proto__) // null
+console.log(p1.__proto__ === Person.prototype) // true
