@@ -68,5 +68,5 @@ console.log("世界")
 //     bar: undefined
 //   },
 //   // this,
-//   // scope
+//   // scope chain: vo + parentScope
 // }
