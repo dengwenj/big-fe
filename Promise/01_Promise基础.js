@@ -50,8 +50,29 @@ function sendMsg(name) {
     }, 1000)
   })
 }
-sendMsg("小红").then((res) => {
-  console.log("成功 " + res)
-}, (res) => {
-  console.log("失败 " + res)
-})
+// sendMsg("小红").then((res) => {
+//   console.log("成功 " + res)
+// }, (res) => {
+//   console.log("失败 " + res)
+// })
+
+// 链式调用
+sendMsg("小红")
+  .catch((res) => {
+    console.log(res)
+    return sendMsg("小明")
+  })
+  .catch((res) => {
+    console.log(res)
+    return sendMsg("小黑")
+  })
+  .catch((res) => {
+    console.log(res)
+    return sendMsg("小王")
+  })
+  .then((res) => {
+    console.log(res)
+  }, (res) => {
+    console.log(res)
+    console.log("最后一个也没有呜呜呜")
+  })
