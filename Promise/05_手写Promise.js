@@ -110,6 +110,23 @@ class MyPromise {
     })
   }
 
+  catch(onRejected) {
+    return this.then(null, onRejected)
+  }
+
+  /**
+   * 无论是什么结果都会运行
+   */
+  finally(callback) {
+    return this.then((data) => {
+      callback()
+      return data
+    }, (reason) => {
+      callback()
+      throw reason
+    })
+  }
+
   /**
    * 修改状态和数据
    * @param {*} state 
@@ -141,6 +158,167 @@ class MyPromise {
   _reject(reason) {
     this._changeStateValue(REJECTED, reason)
   }
+
+  /**
+   * 返回一个已完成的 Promise
+   * 1、传递的 data 本身就是 ES6 的 Promise 对象
+   * 2、传递的 data 是 PromiseLike (Promise A+)，返回新的 Promise，状态和其保持一致
+   * @param {any} data 
+   * @returns 
+   */
+  static reslove(data) {
+    if (data instanceof MyPromise) {
+      return data
+    }
+    return new MyPromise((reslove, reject) => {
+      if (isPromise(data)) {
+        data.then(reslove, reject)
+      } else {
+        reslove(data)
+      }
+    })
+  }
+
+  /**
+   * 返回已拒绝的 Promise
+   * @param {any} reason 
+   */
+  static reject(reason) {
+    return new MyPromise((reslove, reject) => {
+      reject(reason)
+    })
+  }
+
+  /**
+   * 数组里 Promise 的状态全部 fulfilled，那么返回一个 Promise 数组，元素的值就是 Promise 成功的值，按传递 Promise 的顺序
+   * 数组里 Promise 的状态有一个 rejected，那么就返回该失败 Promise 的原因
+   * @param {MyPromise[]} promiseArr 
+   */
+  static all(promiseArr) {
+    return new MyPromise((reslove, reject) => {
+      const arr = []
+      try {
+        if (promiseArr.length === 0) {
+          reslove(arr)
+        }
+
+        let i = 0
+        let count = 0
+        for (const item of promiseArr) {
+          let j = i
+          i++
+          if (!isPromise(item)) {
+            item = new MyPromise((reslove, reject) => {
+              reslove(item)
+            })
+          }
+          item.then(
+            (data) => {
+              count++
+              arr[j] = data
+              // 说明全部都是成功
+              if (count === promiseArr.length) {
+                reslove(arr)
+              }
+            },
+            (reason) => {
+              reject(reason)
+            }
+          )
+        }
+      } catch (error) {
+        reject(error)
+      }
+    })
+  }
+
+  /**
+   * 任务数组全部已决则成功，值为元素已决返回的值，没有失败
+   * @param {MyPromise[]} promiseArr 
+   */
+  static allSettled(promiseArr) {
+    const ps = []
+    for (const p of promiseArr) {
+      ps.push(MyPromise.reslove(p).then(
+        (data) => ({
+          state: FULFILLED,
+          value: data
+        }),
+        (reason) => ({
+          state: REJECTED,
+          value: reason
+        })
+      ))
+    }
+    return MyPromise.all(ps)
+
+    // return new MyPromise((reslove, reject) => {
+    //   const arr = []
+    //   let i = 0
+    //   for (const item of promiseArr) {
+    //     let j = i
+    //     i++
+    //     item.then((data) => {
+    //       arr[j] = {
+    //         state: FULFILLED,
+    //         value: data
+    //       }
+    //       if (arr.length === promiseArr.length) {
+    //         reslove(arr)
+    //       }
+    //     }, (reason) => {
+    //       arr[j] = {
+    //         state: REJECTED,
+    //         value: reason
+    //       }
+    //       if (arr.length === promiseArr.length) {
+    //         reslove(arr)
+    //       }
+    //     })
+    //   }
+    // })
+  }
+
+  /**
+   * 返回一个 Promise，接收一个数组，数组里面是 Promise，谁快用谁
+   */
+  static race(promiseArr) {
+    return new MyPromise((reslove, reject) => {
+      for (const item of promiseArr) {
+        MyPromise.reslove(item).then((data) => {
+          reslove(data)
+        }, (reason) => {
+          reject(reason)
+        })
+      } 
+    })
+  }
+
+  /**
+   * 如果是元素里有成功的 Promise 就返回成功那个 Promise，全部失败返回一个数组，数组里是失败的原因
+   * @param {MyPromise[]} promiseArr 
+   */
+  static any(promiseArr) {
+    return new MyPromise((reslove, reject) => {
+      const arr = []
+      let i = 0
+      let count = 0
+      for (const item of promiseArr) {
+        let j = i
+        i++
+        MyPromise.reslove(item).then((data) => {
+          reslove(data)
+        }, (reason) => {
+          count++
+          arr[j] = reason
+          // 全部失败了
+          if (promiseArr.length === count) {
+            reject(arr)
+          }
+        })
+      }
+    })
+  }
 }
 
 const p = new MyPromise((resolve, reject) => {
@@ -157,9 +335,23 @@ const p1 = p.then(() => {
   // ww.then(reslove, reject)
   return ww
 })
+// setTimeout(() => {
+  // console.log(p1, 'p1')
+// }, 1500)
+
+const allP = MyPromise.any([
+  new MyPromise((resolve, reject) => { setTimeout(() => {
+    resolve(1)
+  }, 1000); }), 
+  new MyPromise((resolve, reject) => { reject(2) }), 
+  new MyPromise((resolve, reject) => { reject(3) })
+])
 setTimeout(() => {
-  console.log(p1, 'p1')
-}, 1500)
+  console.log(allP)
+  allP.then((res) => {
+    console.log(res)
+  })
+}, 1000);
 
 // p.then(function a1() {
 //   console.log("a1")
