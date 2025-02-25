@@ -19,4 +19,11 @@
  * 
  * 7、数据存储：
  * 用户保存数据到磁盘中。比如 cookie、localstorage 等
+ * 
+ * 浏览器离线存储的方式：
+ * 1、Cookie
+ * 2、Web Storage
+ * 3、WebSQL
+ * 4、IndexedDB
+ * 5、File System
  */

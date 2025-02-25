@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <button onclick="readFile()">Read File</button>
+  <button onclick="writeFile()">Write File</button>
+  <button onclick="listDirectory()">List Directory</button>
+  <button onclick="createFileAndDirectory()">Create File and Directory</button>
+  <button onclick="deleteFileAndDirectory()">Delete File and Directory</button>
+  <script>
+    async function readFile() {
+        try {
+          // 请求用户选择文件
+          const [fileHandle] = await window.showOpenFilePicker({
+            types: [
+              {
+                description: 'Text Files',
+                accept: { 'text/plain': ['.txt'] },
+              },
+            ],
+          });
+
+          // 获取文件对象
+          const file = await fileHandle.getFile();
+
+          // 读取文件内容
+          const contents = await file.text();
+          console.log('File contents:', contents);
+        } catch (error) {
+          console.error('Error reading file:', error);
+        }
+      }
+
+      async function writeFile() {
+          try {
+            // 请求用户选择保存位置
+            const fileHandle = await window.showSaveFilePicker({
+              types: [
+                {
+                  description: 'Text Files',
+                  accept: { 'text/plain': ['.txt'] },
+                },
+              ],
+            });
+
+            // 创建可写流
+            const writableStream = await fileHandle.createWritable();
+
+            // 写入内容
+            await writableStream.write('Hello, World!');
+
+            // 关闭流
+            await writableStream.close();
+
+            console.log('File written successfully');
+          } catch (error) {
+            console.error('Error writing file:', error);
+          }
+        }
+
+        async function listDirectory() {
+            try {
+              // 请求用户选择目录
+              const directoryHandle = await window.showDirectoryPicker();
+
+              // 遍历目录内容
+              for await (const entry of directoryHandle.values()) {
+                console.log(entry.name, entry.kind); // 输出文件名和类型（文件或目录）
+              }
+            } catch (error) {
+              console.error('Error listing directory:', error);
+            }
+          }
+
+          async function createFileAndDirectory() {
+              try {
+                // 请求用户选择目录
+                const directoryHandle = await window.showDirectoryPicker();
+
+                // 创建新文件
+                const fileHandle = await directoryHandle.getFileHandle('newFile.txt', { create: true });
+                const writableStream = await fileHandle.createWritable();
+                await writableStream.write('This is a new file.');
+                await writableStream.close();
+
+                // 创建新目录
+                const subDirectoryHandle = await directoryHandle.getDirectoryHandle('newFolder', { create: true });
+
+                console.log('File and directory created successfully');
+              } catch (error) {
+                console.error('Error creating file or directory:', error);
+              }
+            }
+
+            async function deleteFileAndDirectory() {
+                try {
+                  // 请求用户选择目录
+                  const directoryHandle = await window.showDirectoryPicker();
+
+                  // 删除文件
+                  await directoryHandle.removeEntry('newFile.txt');
+
+                  // 删除目录
+                  await directoryHandle.removeEntry('newFolder', { recursive: true }); // recursive 用于删除非空目录
+
+                  console.log('File and directory deleted successfully');
+                } catch (error) {
+                  console.error('Error deleting file or directory:', error);
+                }
+              }
+
+              async function checkPermissions(fileHandle) {
+                  // 检查当前权限
+                  const permissionStatus = await fileHandle.queryPermission({ mode: 'readwrite' });
+
+                  if (permissionStatus === 'granted') {
+                    console.log('Permission already granted');
+                  } else {
+                    // 请求权限
+                    const requestStatus = await fileHandle.requestPermission({ mode: 'readwrite' });
+                    if (requestStatus === 'granted') {
+                      console.log('Permission granted');
+                    } else {
+                      console.log('Permission denied');
+                    }
+                  }
+                }
+
+                async function saveFileHandle(fileHandle) {
+                    const db = await openDB('fileHandlesDB', 1, {
+                      upgrade(db) {
+                        db.createObjectStore('fileHandles');
+                      },
+                    });
+
+                    await db.put('fileHandles', fileHandle, 'savedFileHandle');
+                    console.log('File handle saved to IndexedDB');
+                  }
+
+                  async function loadFileHandle() {
+                    const db = await openDB('fileHandlesDB', 1);
+                    const fileHandle = await db.get('fileHandles', 'savedFileHandle');
+                    if (fileHandle) {
+                      console.log('File handle loaded from IndexedDB');
+                      return fileHandle;
+                    } else {
+                      console.log('No file handle found');
+                      return null;
+                    }
+                  }
+  </script>
+</body>
+</html>
