@@ -13,6 +13,9 @@
  * 2、postMessage()：向创建线程的源窗口发送信息
  * 3、onMessage：获取接收消息的事件句柄
  * 4、importScripts(urls)：worker 内部如果要加载其他脚本，可以使用该方法来导入其他 js 脚本文件
+ * 
+ * Dedicated web worker 随当前页面的关闭而结束，这意味着 Dedicated web worker 只能被创建它的页面访问
+ * 与之相对应的 Shared web worker 共享线程可以同时有多个页面的线程连接
  */
 let count = 0
 setInterval(() => {
