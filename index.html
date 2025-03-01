@@ -4,29 +4,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>Convert Image to Base64</title>
 </head>
 
 <body>
-  <input type="file">
+  <!-- 用于选择图片文件的输入框 -->
+  <input type="file" id="fileInput" accept="image/*">
+  <!-- 用于显示 Base64 编码的文本框 -->
+  <textarea id="base64Output" rows="10" cols="50" readonly></textarea>
+  <img id="img" src="" alt="">
 
   <script>
-    const ipt = document.querySelector('input')
-    ipt.addEventListener('change', (e) => {
-      const fm = new FormData()
-      fm.append('file', ipt.files[0])
+    // 获取输入框和文本框元素
+    const fileInput = document.getElementById('fileInput');
+    const base64Output = document.getElementById('base64Output');
+    const img = document.getElementById('img')
 
-      fetch('http://127.0.0.1:5500', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: "你好",
-          age: 18
-        })
-      })
-    })
+    // 为输入框添加 change 事件监听器
+    fileInput.addEventListener('change', function () {
+      // 获取用户选择的文件
+      const file = this.files[0];
+
+      if (file) {
+        // 创建 FileReader 实例
+        const reader = new FileReader();
+        // 读取文件内容为 Base64 编码的字符串
+        reader.readAsDataURL(file);
+
+        // 监听读取完成事件
+        reader.onload = function (e) {
+          // 获取 Base64 编码的字符串
+          const base64String = e.target.result;
+          // 将 Base64 编码的字符串显示在文本框中
+          base64Output.value = base64String;
+          img.src = base64String
+        };
+      }
+    });
   </script>
 </body>
 

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <button id="fileUpload">文件上传</button>
+  <input id="input" type="file" style="display: none;">
+  <script>
+    const btn = document.getElementById('fileUpload')
+    const ipt = document.getElementById('input')
+
+    btn.onclick = function () {
+      ipt.click()
+    }
+    ipt.onchange = (e) => {
+      console.log(e.target.files)
+      const formdata = new FormData()
+      formdata.append('file', e.target.files[0])
+      fetch('http//localhost:3000', {
+        method: 'POST',
+        body: formdata
+      })
+    }
+  </script>
+</body>
+</html>
