@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <button id="btn1">关闭 pumu</button>
+  <button id="btn2">关闭 ww</button>
+  <script>
+    const btn1 = document.getElementById('btn1')
+    const btn2 = document.getElementById('btn2')
+
+    // 创建 websocket，使用 http 实现 websocket 握手
+    const ws1 = new WebSocket('ws://localhost:8080/pumu')
+    ws1.onopen = function () {
+      console.log("和服务器连接成功会触发pumu")
+    }
+    // 收到服务器的消息后会触发
+    ws1.onmessage = function (e) {
+      console.log(e.data)
+    }
+    // 连接关闭会触发
+    ws1.onclose = function () {
+      console.log("连接关闭会触发")
+    }
+
+    const ws2 = new WebSocket('ws://localhost:8080/ww')
+    ws2.onopen = function () {
+      console.log("和服务器连接成功会触发ww")
+    }
+    // 收到服务器的消息后会触发
+    ws2.onmessage = function (e) {
+      console.log(e.data)
+    }
+    // 连接关闭会触发
+    ws2.onclose = function () {
+      console.log("连接关闭会触发")
+    }
+    // ws.send("发送消息给服务器")
+    // 关闭 websocket 连接
+    // ws.close() 
+    // 连接状态：0正在连接中 1已连接 2正在关闭中 3已关闭
+    // ws.readyState
+
+    btn1.onclick = () => {
+      ws1.close() 
+    }
+    btn2.onclick = () => {
+      ws2.close()
+    }
+  </script>
+</body>
+</html>
