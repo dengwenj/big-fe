@@ -5,6 +5,9 @@
 
     <!-- <B :number="number" @change="number = $event"/> -->
     <B v-model="number" />
+    
+    <button @click="handleA">handleA</button>
+    <div>{{ a }}</div>
   </div>
 </template>
 
@@ -26,6 +29,7 @@ export default {
   beforeCreate() {
     // console.log('beforeCreate', this)
     // console.log(this.num) // undefined
+    this.a = 100
   },
   created() {
     // console.log('created', this);
@@ -33,10 +37,14 @@ export default {
   },
   mounted() {
     console.log("虚拟 dom", this._vnode)
+    console.log(this)
   },
   methods: {
     ww() {
       console.log("ww")
+    },
+    handleA() {
+      console.log(this.a++)
     }
   }
   // render(h) {
