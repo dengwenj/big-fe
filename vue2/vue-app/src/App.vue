@@ -1,6 +1,6 @@
 <template>
-  <div>
-    vue app
+  <div class="app" a="1" b="2" @click="ww">
+    <div>vue app</div>
     <A :num="num" @emitNum="num++" />
   </div>
 </template>
@@ -18,12 +18,24 @@ export default {
     }
   },
   beforeCreate() {
-    console.log('beforeCreate', this)
-    console.log(this.num) // undefined
+    // console.log('beforeCreate', this)
+    // console.log(this.num) // undefined
   },
   created() {
-    console.log('created', this);
-    console.log(this.num) // 1
+    // console.log('created', this);
+    // console.log(this.num) // 1
+  },
+  mounted() {
+    console.log("虚拟 dom", this._vnode)
+  },
+  methods: {
+    ww() {
+      console.log("ww")
+    }
   }
+  // render(h) {
+  //   const vDom = h('div', 'ww')
+  //   return vDom
+  // }
 }
 </script>
