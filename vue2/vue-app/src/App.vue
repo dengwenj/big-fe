@@ -2,19 +2,25 @@
   <div class="app" a="1" b="2" @click="ww">
     <div>vue app</div>
     <A :num="num" @emitNum="num++" />
+
+    <!-- <B :number="number" @change="number = $event"/> -->
+    <B v-model="number" />
   </div>
 </template>
 
 <script>
 import A from './views/A.vue';
+import B from './views/B.vue';
 
 export default {
   components: {
-    A
+    A,
+    B
   },
   data() {
     return {
-      num: 1
+      num: 1,
+      number: 0
     }
   },
   beforeCreate() {
