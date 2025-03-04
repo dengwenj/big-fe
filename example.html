@@ -1,11 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>分片加载数据</title>
 </head>
+
 <body>
-  <div>example</div>
+  <ul id="list"></ul>
+  <script>
+    const list = document.getElementById('list');
+    // 模拟的大数据数组
+    const largeData = Array.from({ length: 100000 }, (_, index) => `Item ${index + 1}`);
+    const batchSize = 20; // 每次加载的数据数量
+    let currentIndex = 0;
+
+    function loadData() {
+      const endIndex = Math.min(currentIndex + batchSize, largeData.length);
+      for (let i = currentIndex; i < endIndex; i++) {
+        const item = document.createElement('li');
+        item.textContent = largeData[i];
+        list.appendChild(item);
+      }
+      currentIndex = endIndex;
+
+      // 如果还有数据未加载，继续请求下一帧加载
+      if (currentIndex < largeData.length) {
+        requestAnimationFrame(loadData);
+      }
+    }
+
+    // 开始加载数据
+    requestAnimationFrame(loadData);
+  </script>
 </body>
+
 </html>
