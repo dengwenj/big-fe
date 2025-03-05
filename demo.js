@@ -117,7 +117,7 @@ class Task {
   // time: 任务执行的时间是多久
   run() {
     while (this.maxNum > this.runTasks.length) {
-      const { fn, time } = this.tasks.shift()
+      const fn = this.tasks.shift()
       this.runTasks.push(fn)
       setTimeout(() => {
         fn.call(this)
@@ -126,15 +126,12 @@ class Task {
         if (this.tasks.length) {
           this.run()
         }
-      }, time)
+      }, this.time)
     }
   }
 
-  addTask(fn, time) {
-    this.tasks.push({
-      fn,
-      time
-    })
+  addTask(fn) {
+    this.tasks.push(fn)
   }
 }
 
@@ -142,27 +139,27 @@ const t = new Task(3, 1000)
 
 t.addTask(function t1() {
   console.log("任务1")
-}, 1000)
+})
 
 t.addTask(function t2() {
   console.log("任务2");
-}, 1000)
+})
 
 t.addTask(function t3() {
   console.log("任务3")
-}, 1000)
+})
 
 t.addTask(function t4() {
   console.log("任务4")
-}, 1000)
+})
 
 t.addTask(function t6() {
   console.log("任务6")
-}, 1000)
+})
 
 
 t.addTask(function t5() {
   console.log("任务5")
-}, 1000)
+})
 
 t.run()
