@@ -27,5 +27,5 @@ esbuild.context({
   globalName: packageJson.buildOptions?.name
 }).then((ctx) => {
   console.log('start dev');
-  return ctx.watch()
+  return ctx.watch() // 实时监控
 })

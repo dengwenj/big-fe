@@ -10,3 +10,8 @@
 * vue3 源码采用 monorepo 方式进行管理，将模块拆分到 package 目录中，作为一个个包来管理，这样职责划分更加明确
 * 一个仓库可维护多个模块，不用到处找仓库
 * 方便版本管理和依赖管理，模块之间的引用，调用都非常方便
+
+### Composition API(组合式)
+* CompositionAPI 不存在 this 指向不明确问题
+* CompositionAPI 对 tree-shaking 更加友好，代码也更容易压缩
+* reactivity 模块中就包含了很多我们经常使用的 API：computed、reactive、ref、effect
