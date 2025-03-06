@@ -17,10 +17,13 @@
     // effect 副作用，数据变化后可以让 effect 重新执行组件、watch、computed 都是基于 effect 来实现
     const obj = { name: '朴睦', age: 25 }
     const state = reactive(obj)
-    console.log(state.name, state.age)
     // effect 默认会执行一次，后面数据变化会再执行
     effect(() => {
       app.innerHTML = `姓名：${state.name} 年龄：${state.age}`
+      effect(() => {
+        console.log(state.age)
+      })
+      console.log(state.name)
     })
     setTimeout(() => state.age++, 1000)
   </script>
