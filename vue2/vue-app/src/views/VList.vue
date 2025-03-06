@@ -70,7 +70,7 @@ export default {
       }
       endIndex += c
 
-      // 移动了多少。起始下标的偏移量。不能直接加上 scrollTop，要用这种方式(startIndex * this.itemSize)
+      // 移动了多少。起始下标的偏移量。不能直接加上 scrollTop，要用这种方式(startIndex * this.itemSize)，往上滑一个才移动一个的距离，不要实时
       const p = startIndex * this.itemSize
       this.pool = this.dataSource.slice(startIndex, endIndex).map((it, idx) => {
         return {
