@@ -3,21 +3,25 @@ function isObject(obj) {
   return typeof obj === "object" && obj !== null;
 }
 
+// packages/reactivity/src/baseHandler.ts
+var mutableHandler = {
+  // receiver 代理对象
+  get(target, key, receiver) {
+    if (key === "__pumu_isReactive" /* IS_REACTIVE */) {
+      return true;
+    }
+    return Reflect.get(target, key, receiver);
+  },
+  set(target, key, newValue, receiver) {
+    return Reflect.set(target, key, newValue, receiver);
+  }
+};
+
 // packages/reactivity/src/reactive.ts
 var reactiveMap = /* @__PURE__ */ new WeakMap();
 function reactive(target) {
   return createReactiveObject(target);
 }
-var proxyHandler = {
-  get(target, key, receiver) {
-    if (key === "__pumu_isReactive" /* IS_REACTIVE */) {
-      return true;
-    }
-  },
-  set(target, key, newValue, receiver) {
-    return true;
-  }
-};
 function createReactiveObject(target) {
   if (!isObject(target)) {
     return target;
@@ -29,7 +33,7 @@ function createReactiveObject(target) {
   if (exitsProxy) {
     return exitsProxy;
   }
-  const proxy = new Proxy(target, proxyHandler);
+  const proxy = new Proxy(target, mutableHandler);
   reactiveMap.set(target, proxy);
   return proxy;
 }

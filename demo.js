@@ -163,3 +163,19 @@ t.addTask(function t5() {
 })
 
 t.run()
+
+const person = {
+  name: '朴睦',
+  get cName() {
+    return this.name + "25"
+  }
+}
+
+const p = new Proxy(person, {
+  get(target, key, receiver) {
+    return Reflect.get(target, key, receiver)
+  },
+  set(target, key, val, receiver) {
+    return Reflect.set(target, key, val, receiver)
+  }
+})
