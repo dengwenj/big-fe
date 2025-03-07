@@ -10,20 +10,22 @@
   <script type="module">
     // import { effect, reactive, ref } from '../../../node_modules/@vue/reactivity/dist/reactivity.esm-browser.js'
 
-    import { effect, ref } from './reactivity.js'
+    import { effect, ref, reactive, toRef, toRefs } from './reactivity.js'
 
-    const flag = ref(false)
-    console.log(flag, 'flag')
-    const obj = ref({ name: '朴睦' })
-    console.log(obj, 'obj')
+    // 这样解构在去修改 name 的值会丧失响应式，用 toRef 或者 toRefs 来处理
+    const state = reactive({ name: '朴睦', age: 25 })
+    
+    // const name = toRef(state, 'name')
+    // console.log(name, 'name')
+    const { name, age } = toRefs(state)
+    console.log(name, age)
 
     effect(() => {
-      console.log("来了吗")
-      app.innerHTML = flag.value ? '你好' : '世界'
+      app.innerHTML = name.value
     })
 
     setTimeout(() => {
-      flag.value = true
+      name.value = 'ww'
     }, 1000);
   </script>
 </body>

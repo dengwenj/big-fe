@@ -211,12 +211,38 @@ function trackRef(target, key) {
 function triggerRef(target, key, newValue, oldValue) {
   trigger(target, key, newValue, oldValue);
 }
+function toRef(target, key) {
+  return new ObjectRefImpl(target, key);
+}
+function toRefs(target) {
+  const res = {};
+  for (const key in target) {
+    res[key] = toRef(target, key);
+  }
+  return res;
+}
+var ObjectRefImpl = class {
+  constructor(_target, _key) {
+    this._target = _target;
+    this._key = _key;
+    // ref 的标识
+    this.__v_isRef = true;
+  }
+  get value() {
+    return this._target[this._key];
+  }
+  set value(newValue) {
+    this._target[this._key] = newValue;
+  }
+};
 export {
   activeEffect,
   effect,
   reactive,
   ref,
   targetEffects,
-  toReactive
+  toReactive,
+  toRef,
+  toRefs
 };
 //# sourceMappingURL=reactivity.js.map
