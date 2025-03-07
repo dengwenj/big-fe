@@ -1,6 +1,14 @@
 import { activeEffect, targetEffects } from "./effect"
 
+// 用weakmap保存的依赖，结构如下
 export const targetMap = new WeakMap()
+// {
+//   { name: 'pumu', age: 25 }: {
+//     name: [effect1, effect2],
+//     age: [effect1]
+//   }
+// }
+
 
 /**
  * 收集依赖

@@ -9,6 +9,12 @@ function effect(fn, options) {
     _effect.run();
   });
   _effect.run();
+  if (options) {
+    Object.assign(_effect, options);
+  }
+  const runner = _effect.run.bind(_effect);
+  runner.effect = _effect;
+  return runner;
 }
 var activeEffect = [];
 var ReactiveEffect = class {
@@ -54,6 +60,10 @@ var ReactiveEffect = class {
       this.cleanPreEffect.set(effect2, targetData);
     }
   }
+  /**
+   * vue 里面做的是拿老的依赖和新的依赖比对，没用的清除
+   * 我这里做的是直接把之前的依赖清除，没有比对
+   */
   clearEffect() {
     const targetToKeyAndIndex = this.cleanPreEffect.get(this);
     if (!targetToKeyAndIndex) {
@@ -72,6 +82,9 @@ var ReactiveEffect = class {
 };
 function targetEffects(effects) {
   for (const effect2 of effects) {
+    if (!effect2) {
+      return;
+    }
     effect2.schedulder();
   }
 }

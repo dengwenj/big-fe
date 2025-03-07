@@ -5,7 +5,7 @@ import { targetMap } from "./reactiveEffect"
  * @param fn callback
  * @param options 
  */
-export function effect(fn: () => void, options) {
+export function effect(fn: () => void, options: { schedulder: () => void }) {
   // 创建一个响应式 effect
   const _effect = new ReactiveEffect(fn, () => {
     // schedulder 当数据改变时要执行 effect
@@ -14,6 +14,15 @@ export function effect(fn: () => void, options) {
 
   // 首次要执行一次 effect
   _effect.run()
+
+  if (options) {
+    // _effect 上的属性被 options 覆盖了
+    Object.assign(_effect, options)
+  }
+
+  const runner = _effect.run.bind(_effect)
+  runner.effect = _effect
+  return runner
 }
 
 // export let activeEffect = null
@@ -84,6 +93,10 @@ class ReactiveEffect {
     }
   }
 
+  /**
+   * vue 里面做的是拿老的依赖和新的依赖比对，没用的清除
+   * 我这里做的是直接把之前的依赖清除，没有比对
+   */
   private clearEffect(): void {
     // 清除这个 effect 实例所有
     const targetToKeyAndIndex = this.cleanPreEffect.get(this)
@@ -108,6 +121,9 @@ class ReactiveEffect {
 
 export function targetEffects(effects: ReactiveEffect[]) {
   for (const effect of effects) {
+    if (!effect) {
+      return
+    }
     effect.schedulder() // 执行这个方法就会只执行 _effect.run() 就会触发 effect 里的回调方法
   }
 }
