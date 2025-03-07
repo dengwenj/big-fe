@@ -15,17 +15,101 @@ var ReactiveEffect = class {
   constructor(fn, schedulder) {
     this.fn = fn;
     this.schedulder = schedulder;
+    // 创建的 effect 是响应式的
+    this.active = true;
+    // 记录之前的
+    this.cleanPreEffect = /* @__PURE__ */ new Map();
   }
   // 执行 fn 函数，这个 fn 函数就是 effect 中的回调函数
   run() {
+    if (!this.active) {
+      return this.fn();
+    }
     try {
       activeEffect.push(this);
+      this.clearEffect();
       return this.fn();
     } finally {
       activeEffect.pop();
     }
   }
+  getCleanPreEffect() {
+    return this.cleanPreEffect;
+  }
+  setCleanPreEffect(effect2, target, keyAndIndex) {
+    if (this.cleanPreEffect.has(effect2)) {
+      const targetData = this.cleanPreEffect.get(effect2);
+      if (targetData.has(target)) {
+        const preKeyAndIndex = targetData.get(target);
+        targetData.set(target, {
+          ...preKeyAndIndex,
+          ...keyAndIndex
+        });
+      } else {
+        targetData.set(target, keyAndIndex);
+      }
+    } else {
+      const targetData = /* @__PURE__ */ new Map();
+      targetData.set(target, keyAndIndex);
+      this.cleanPreEffect.set(effect2, targetData);
+    }
+  }
+  clearEffect() {
+    const targetToKeyAndIndex = this.cleanPreEffect.get(this);
+    if (!targetToKeyAndIndex) {
+      return;
+    }
+    targetToKeyAndIndex.forEach((val, target) => {
+      const effectsObj = targetMap.get(target);
+      const keys = Object.keys(val);
+      for (const key of keys) {
+        const effects = effectsObj[key];
+        const idx = val[key];
+        effects.splice(idx, 1, null);
+      }
+    });
+  }
 };
+function targetEffects(effects) {
+  for (const effect2 of effects) {
+    effect2.schedulder();
+  }
+}
+
+// packages/reactivity/src/reactiveEffect.ts
+var targetMap = /* @__PURE__ */ new WeakMap();
+function track(target, key) {
+  const _effect = activeEffect[activeEffect.length - 1];
+  if (_effect) {
+    let idx = -1;
+    if (targetMap.has(target)) {
+      const data = targetMap.get(target);
+      if (data[key]) {
+        data[key].push(_effect);
+        idx = data[key].length - 1;
+      } else {
+        data[key] = [_effect];
+        idx = 0;
+      }
+    } else {
+      targetMap.set(target, {
+        [key]: [_effect]
+      });
+      idx = 0;
+    }
+    _effect.setCleanPreEffect(_effect, target, { [key]: idx });
+  }
+}
+console.log(targetMap);
+function trigger(target, key, oldValue, newValue) {
+  if (!targetMap.has(target)) {
+    return;
+  }
+  const data = targetMap.get(target);
+  if (data[key]) {
+    targetEffects([...data[key]]);
+  }
+}
 
 // packages/reactivity/src/baseHandler.ts
 var mutableHandler = {
@@ -34,13 +118,16 @@ var mutableHandler = {
     if (key === "__pumu_isReactive" /* IS_REACTIVE */) {
       return true;
     }
-    const _effect = activeEffect[activeEffect.length - 1];
-    if (_effect) {
-    }
+    track(target, key);
     return Reflect.get(target, key, receiver);
   },
   set(target, key, newValue, receiver) {
-    return Reflect.set(target, key, newValue, receiver);
+    const oldValue = target[key];
+    const res = Reflect.set(target, key, newValue, receiver);
+    if (oldValue !== newValue) {
+      trigger(target, key, newValue, oldValue);
+    }
+    return res;
   }
 };
 
@@ -67,6 +154,7 @@ function createReactiveObject(target) {
 export {
   activeEffect,
   effect,
-  reactive
+  reactive,
+  targetEffects
 };
 //# sourceMappingURL=reactivity.js.map

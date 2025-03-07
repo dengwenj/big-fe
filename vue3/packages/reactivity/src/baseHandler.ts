@@ -1,4 +1,4 @@
-import { activeEffect } from "./effect"
+import { track, trigger } from "./reactiveEffect"
 
 export enum ReactiveFlags {
   IS_REACTIVE = "__pumu_isReactive"
@@ -12,17 +12,19 @@ export const mutableHandler: ProxyHandler<any> = {
     }
     // 当取值的时候，应该让响应式属性和 effect 映射起来
     // 收集依赖：谁用了我，保存函数
-    const _effect = activeEffect[activeEffect.length - 1]
-    if (_effect) {
-      
-    }
+    track(target, key)
     return Reflect.get(target, key, receiver) // Reflect.get(target, key, receiver) === receiver[key]，但它不会递归调用
   },
 
   set(target, key, newValue, receiver) {
     // 找到属性，让对应的 effect 重新执行
-    // 派发更新，当修改了属性去调用函数
-    return Reflect.set(target, key, newValue, receiver)
+    const oldValue = target[key]
+    const res = Reflect.set(target, key, newValue, receiver)
+    if (oldValue !== newValue) {
+      // 派发更新，当修改了属性去调用 effect 函数
+      trigger(target, key, newValue, oldValue)
+    }
+    return res
   },
 }
 
