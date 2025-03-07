@@ -47,7 +47,7 @@ console.log(targetMap)
  * @param oldValue 
  * @param newValue 
  */
-export function trigger(target: object, key: any, oldValue: any, newValue: any) {
+export function trigger(target: object, key: any, newValue: any, oldValue: any) {
   if (!targetMap.has(target)) {
     return
   }

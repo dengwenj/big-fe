@@ -118,7 +118,7 @@ function track(target, key) {
   }
 }
 console.log(targetMap);
-function trigger(target, key, oldValue, newValue) {
+function trigger(target, key, newValue, oldValue) {
   if (!targetMap.has(target)) {
     return;
   }
@@ -172,10 +172,51 @@ function createReactiveObject(target) {
   reactiveMap.set(target, proxy);
   return proxy;
 }
+function toReactive(value) {
+  return isObject(value) ? reactive(value) : value;
+}
+
+// packages/reactivity/src/ref.ts
+function ref(value) {
+  return createRef(value);
+}
+function createRef(value) {
+  return new RefImpl(value);
+}
+var RefImpl = class _RefImpl {
+  // 用来保存 ref 的值
+  constructor(rawValue) {
+    this.rawValue = rawValue;
+    this.__v_isRef = true;
+    this._value = toReactive(rawValue);
+  }
+  static {
+    this.VALUE = "value";
+  }
+  get value() {
+    trackRef(this, _RefImpl.VALUE);
+    return this._value;
+  }
+  set value(newValue) {
+    if (newValue !== this.rawValue) {
+      this.rawValue = newValue;
+      this._value = newValue;
+      triggerRef(this, _RefImpl.VALUE, newValue, this.rawValue);
+    }
+  }
+};
+function trackRef(target, key) {
+  track(target, key);
+}
+function triggerRef(target, key, newValue, oldValue) {
+  trigger(target, key, newValue, oldValue);
+}
 export {
   activeEffect,
   effect,
   reactive,
-  targetEffects
+  ref,
+  targetEffects,
+  toReactive
 };
 //# sourceMappingURL=reactivity.js.map
