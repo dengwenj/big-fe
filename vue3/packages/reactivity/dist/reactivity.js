@@ -23,6 +23,7 @@ var ReactiveEffect = class {
     this.schedulder = schedulder;
     // 创建的 effect 是响应式的
     this.active = true;
+    this.isRunning = false;
     // 记录之前的
     this.cleanPreEffect = /* @__PURE__ */ new Map();
   }
@@ -34,9 +35,11 @@ var ReactiveEffect = class {
     try {
       activeEffect.push(this);
       this.clearEffect();
+      this.isRunning = true;
       return this.fn();
     } finally {
       activeEffect.pop();
+      this.isRunning = false;
     }
   }
   getCleanPreEffect() {
@@ -82,10 +85,11 @@ var ReactiveEffect = class {
 };
 function targetEffects(effects) {
   for (const effect2 of effects) {
-    if (!effect2) {
-      return;
+    if (effect2) {
+      if (!effect2.isRunning) {
+        effect2.schedulder();
+      }
     }
-    effect2.schedulder();
   }
 }
 
@@ -132,7 +136,11 @@ var mutableHandler = {
       return true;
     }
     track(target, key);
-    return Reflect.get(target, key, receiver);
+    const res = Reflect.get(target, key, receiver);
+    if (isObject(res)) {
+      return reactive(res);
+    }
+    return res;
   },
   set(target, key, newValue, receiver) {
     const oldValue = target[key];

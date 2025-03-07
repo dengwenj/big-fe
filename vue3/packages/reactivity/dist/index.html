@@ -15,31 +15,42 @@
     import { effect, reactive } from './reactivity.js'
     // reactive 让数据变成响应式的
     // effect 副作用，数据变化后可以让 effect 重新执行组件、watch、computed 都是基于 effect 来实现
-    const obj = { name: '朴睦', age: 25, flag: false }
+    const obj = { name: '朴睦', age: 25, flag: false, address: { a: '上海市' } }
     const state = reactive(obj)
     // effect 默认会执行一次，后面数据变化会再执行
-    const runner = effect(() => {
-      // app.innerHTML = `姓名：${state.name} 年龄：${state.age}`
+    // const runner = effect(() => {
+    //   // app.innerHTML = `姓名：${state.name} 年龄：${state.age}`
 
-      console.log("effect")
-      app.innerHTML = state.flag ? state.name : state.age
-    }, {
-      schedulder: () => {
-        console.log("执行自己的")
-        runner()
-      }
-    })
+    //   console.log("effect")
+    //   app.innerHTML = state.flag ? state.name : state.age
+    // }, {
+    //   schedulder: () => {
+    //     console.log("执行自己的")
+    //     runner()
+    //   }
+    // })
 
     // effect(() => {
     //   state.age
     // })
+    // setTimeout(() => {
+    //   state.flag = true
+    //   setTimeout(() => {
+    //     console.log("可以不执行了")
+    //     state.age = "ww"
+    //   }, 1000);
+    // }, 1000)
+
+    effect(() => {
+      // app.innerHTML = state.name
+      // console.log("来了吗")
+      // state.name = Math.random()
+      app.innerHTML = state.address.a
+    })
+
     setTimeout(() => {
-      state.flag = true
-      setTimeout(() => {
-        console.log("可以不执行了")
-        state.age = "ww"
-      }, 1000);
-    }, 1000)
+      state.address.a = "重庆市"
+    }, 1000);
   </script>
 </body>
 </html>

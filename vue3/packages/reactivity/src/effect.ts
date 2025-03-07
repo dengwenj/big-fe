@@ -33,6 +33,8 @@ class ReactiveEffect {
   // 创建的 effect 是响应式的
   public active = true
 
+  public isRunning = false
+
   // 记录之前的
   private cleanPreEffect: Map<ReactiveEffect, Map<object, Record<string, number>>> = new Map()
 
@@ -53,12 +55,14 @@ class ReactiveEffect {
       // 执行回调函数之前，先把之前的 effect 清除掉
       this.clearEffect()
 
+      this.isRunning = true
       return this.fn()
     } finally {
       // 执行完后置为空
       // activeEffect = null
       // 删除最后一个，函数调用栈，后进先出
       activeEffect.pop()
+      this.isRunning = false
     }
   }
 
@@ -121,10 +125,12 @@ class ReactiveEffect {
 
 export function targetEffects(effects: ReactiveEffect[]) {
   for (const effect of effects) {
-    if (!effect) {
-      return
+    if (effect) {
+      // 是否正在执行
+      if (!effect.isRunning) {
+        effect.schedulder() // 执行这个方法就会只执行 _effect.run() 就会触发 effect 里的回调方法 
+      }
     }
-    effect.schedulder() // 执行这个方法就会只执行 _effect.run() 就会触发 effect 里的回调方法
   }
 }
 
