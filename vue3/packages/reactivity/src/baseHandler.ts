@@ -6,6 +6,25 @@ export enum ReactiveFlags {
   IS_REACTIVE = "__pumu_isReactive"
 }
 
+const person = {
+  name: '朴睦',
+  get cName() {
+    return this.name + "25"
+  }
+}
+
+const p = new Proxy(person, {
+  get(target, key, receiver) {
+    return Reflect.get(target, key, receiver)
+    // return target[key] // person.name 不会触发，因为 target 没有被代理，所以不会触发，要用代理对象去取才会走getter
+  },
+  set(target, key, val, receiver) {
+    return Reflect.set(target, key, val, receiver)
+  }
+})
+// console.log(p.cName)
+
+
 export const mutableHandler: ProxyHandler<any> = {
   // receiver 代理对象
   get(target, key, receiver) {

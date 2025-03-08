@@ -10,22 +10,22 @@
   <script type="module">
     // import { effect, reactive, ref } from '../../../node_modules/@vue/reactivity/dist/reactivity.esm-browser.js'
 
-    import { effect, ref, reactive, toRef, toRefs } from './reactivity.js'
+    import { effect, ref, reactive, toRef, toRefs, proxyRefs } from './reactivity.js'
 
     // 这样解构在去修改 name 的值会丧失响应式，用 toRef 或者 toRefs 来处理
     const state = reactive({ name: '朴睦', age: 25 })
-    
-    // const name = toRef(state, 'name')
-    // console.log(name, 'name')
-    const { name, age } = toRefs(state)
-    console.log(name, age)
 
+    const refs = toRefs(state)
+    console.log(refs.name.value)
+    // 不用 .value 了
+    const proxy = proxyRefs(refs)
+    console.log(proxy)
+  
     effect(() => {
-      app.innerHTML = name.value
+      console.log(proxy.name, proxy.age)
     })
-
     setTimeout(() => {
-      name.value = 'ww'
+      proxy.age = 26
     }, 1000);
   </script>
 </body>

@@ -56,9 +56,9 @@ function triggerRef(target, key, newValue, oldValue) {
 
 /**
  * toRef toRefs，就是让 reactive 对象变成 ref 对象，相当于做了一个代理
- * 为了防止 reactive 对象解构的时候丧失响应式
+ * 作用：为了防止 reactive 对象解构的时候丧失响应式
  */
-// 这样解构再去修改 name 的值会丧失响应式，用 toRef 或者 toRefs 来处理
+// 这样解构(解构会给一个新对象)再去修改 name 的值会丧失响应式，用 toRef 或者 toRefs 来处理
 // let { name } = reactive({ name: '朴睦' })
 // effect(() => {
 //   app.innerHTML = name
@@ -93,4 +93,28 @@ class ObjectRefImpl {
   set value(newValue) {
     this._target[this._key] = newValue
   }
+}
+
+/**
+ * 让 ref 不再去点 value
+ * 以前：person.name.value，现在：person.name 就可以获取到值
+ */
+export function proxyRefs(objectWithRefs) {
+  return new Proxy(objectWithRefs, {
+    get(target, key, receiver) {
+      // 说明带有 ref
+      const res = Reflect.get(target, key, receiver)
+      return res.__v_isRef ? res.value : res // 自动脱ref
+    },
+
+    set(target, key, newValue, receiver) {
+      const oldValue = target[key]
+      // 说明是 ref
+      if (oldValue.__v_isRef) {
+        oldValue.value = newValue
+        return true
+      }
+      return Reflect.set(target, key, newValue, receiver)
+    },
+  })
 }

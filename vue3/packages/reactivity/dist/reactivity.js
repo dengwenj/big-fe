@@ -129,6 +129,20 @@ function trigger(target, key, newValue, oldValue) {
 }
 
 // packages/reactivity/src/baseHandler.ts
+var person = {
+  name: "\u6734\u7766",
+  get cName() {
+    return this.name + "25";
+  }
+};
+var p = new Proxy(person, {
+  get(target, key, receiver) {
+    return Reflect.get(target, key, receiver);
+  },
+  set(target, key, val, receiver) {
+    return Reflect.set(target, key, val, receiver);
+  }
+});
 var mutableHandler = {
   // receiver 代理对象
   get(target, key, receiver) {
@@ -235,9 +249,26 @@ var ObjectRefImpl = class {
     this._target[this._key] = newValue;
   }
 };
+function proxyRefs(objectWithRefs) {
+  return new Proxy(objectWithRefs, {
+    get(target, key, receiver) {
+      const res = Reflect.get(target, key, receiver);
+      return res.__v_isRef ? res.value : res;
+    },
+    set(target, key, newValue, receiver) {
+      const oldValue = target[key];
+      if (oldValue.__v_isRef) {
+        oldValue.value = newValue;
+        return true;
+      }
+      return Reflect.set(target, key, newValue, receiver);
+    }
+  });
+}
 export {
   activeEffect,
   effect,
+  proxyRefs,
   reactive,
   ref,
   targetEffects,
