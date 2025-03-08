@@ -331,6 +331,47 @@ function trackComputedRef(target, key) {
 function triggerComputedRef(target, key, newValue, oldValue) {
   trigger(target, key, newValue, oldValue);
 }
+
+// packages/reactivity/src/apiWatch.ts
+function watch(source, cb, options = {}) {
+  return doWatch(source, cb, options);
+}
+function doWatch(source, cb, options) {
+  let flag = false;
+  if (Object.prototype.toString.call(source) === "[object Proxy]" || source.__v_isRef || isFunction(source)) {
+    flag = true;
+  }
+  if (!flag) {
+    console.warn(`source \u5FC5\u987B\u662F reactive ref getter`);
+    return;
+  }
+  let getter = source;
+  if (isObject(source)) {
+    getter = () => forEachProperty(source, options.deep);
+  }
+  let oldValue;
+  if (options.immediate) {
+    cb(oldValue, source);
+  }
+  const job = () => {
+    const newValue = effect2.run();
+    cb(newValue, oldValue);
+    oldValue = newValue;
+  };
+  const effect2 = new ReactiveEffect(getter, job);
+  oldValue = effect2.run();
+}
+function forEachProperty(source, deep) {
+  if (source.__v_isRef) {
+    return source.value;
+  }
+  for (const key in source) {
+    if (isObject(source[key]) && deep) {
+      forEachProperty(source[key], deep);
+    }
+  }
+  return source;
+}
 export {
   ReactiveEffect,
   activeEffect,
@@ -344,6 +385,7 @@ export {
   toRef,
   toRefs,
   trackComputedRef,
-  triggerComputedRef
+  triggerComputedRef,
+  watch
 };
 //# sourceMappingURL=reactivity.js.map

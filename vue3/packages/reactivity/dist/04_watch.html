@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script type="module">
+    // import { watch, reactive, ref } from '../../../node_modules/vue/dist/vue.esm-browser.js'
+
+    import { watch, reactive, ref } from './reactivity.js'
+
+    const state = reactive({ name: '朴睦', age: 25, address: { a: '上海市' } })
+    // watch 第一个参数最终都会变成一个函数(effect)，watch内部会做，参数归一化
+    
+    // watch(state, (newValue, oldValue) => {
+    //   console.log(newValue, oldValue)
+    // }, {
+    //   // deep: true,
+    //   // immediate: true
+    // })
+
+    watch(() => state.name, (newValue, oldValue) => {
+      console.log(newValue, oldValue)
+    }, {
+      // deep: true,
+      // immediate: true
+    })
+
+    const name = ref("朴睦")
+    watch(name, (newValue, oldValue) => {
+      console.log(newValue, oldValue)
+    }, {
+      // deep: true,
+      // immediate: true
+    })
+
+    setTimeout(() => {
+      // state.name = 'dwj'
+      // state.address.a = '北京市'
+
+      name.value = "王小波"
+    }, 1000)
+  </script>
+</body>
+</html>
