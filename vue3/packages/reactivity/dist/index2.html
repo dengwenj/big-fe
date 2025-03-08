@@ -14,7 +14,10 @@
 
     // 这样解构在去修改 name 的值会丧失响应式，用 toRef 或者 toRefs 来处理
     const state = reactive({ name: '朴睦', age: 25 })
+    const p = ref({ name: 'dwj' })
+    console.log(p.value) // 返回的是 proxy
 
+    // 把每一个属性转成 ref
     const refs = toRefs(state)
     console.log(refs.name.value)
     // 不用 .value 了

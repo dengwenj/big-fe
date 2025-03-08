@@ -3,7 +3,7 @@ import { targetMap } from "./reactiveEffect"
 /**
  * 首次会执行一次 effect 中的回调函数，后面当数据变化时再会执行 effect 中的回调函数
  * @param fn callback
- * @param options 
+ * @param options 作用是可以调度执行，可以先执行自己的逻辑，然后自己 runner 去执行 effect中的回调函数 (AOP 思想，切面)
  */
 export function effect(fn: () => void, options: { schedulder: () => void }) {
   // 创建一个响应式 effect

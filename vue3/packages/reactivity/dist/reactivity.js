@@ -207,10 +207,12 @@ var RefImpl = class _RefImpl {
   static {
     this.VALUE = "value";
   }
+  // get 时依赖收集
   get value() {
     trackRef(this, _RefImpl.VALUE);
     return this._value;
   }
+  // set 时派发更新
   set value(newValue) {
     if (newValue !== this.rawValue) {
       this.rawValue = newValue;

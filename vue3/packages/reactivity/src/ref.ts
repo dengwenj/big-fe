@@ -4,6 +4,8 @@ import { track, trigger } from './reactiveEffect'
 /**
  * ref 可以传普通值，在内部会包裹一层，会把变成对象
  * ref 必须要点 value 的原因是在内部包裹了一个对象，对象有个属性叫 value
+ * ref 中传递的是对象的话会把对象转换成 proxy、传入的是普通值的话直接 class 里面 get set 监听到了
+ * ref 是对象: obj.value.name、ref是普通值：num.value
  * 
  * ref 能这么简单的完成，就是因为 **收集依赖的方法** 和 **派发更新的方法** 封装好了直接调用就行了
  * 当修改 ref 的值时会触发 effect 中的回调函数
@@ -28,12 +30,14 @@ class RefImpl {
     this._value = toReactive(rawValue)
   }
 
+  // get 时依赖收集
   get value() {
     // 收集依赖
     trackRef(this, RefImpl.VALUE)
     return this._value
   }
 
+  // set 时派发更新
   set value(newValue) {
     if (newValue !== this.rawValue) {
       this.rawValue = newValue
@@ -67,10 +71,18 @@ function triggerRef(target, key, newValue, oldValue) {
 //   name = "哈哈"
 // }, 1000);
 
+/**
+ * 把 proxy(reactive) 中的属性转成 ref
+ */
 export function toRef(target: object, key: string) {
   return new ObjectRefImpl(target, key)
 }
 
+/**
+ * 把 reactive 每一个属性转成 ref
+ * @param target 
+ * @returns 
+ */
 export function toRefs(target: object) {
   const res = {}
   for (const key in target) {
@@ -96,7 +108,7 @@ class ObjectRefImpl {
 }
 
 /**
- * 让 ref 不再去点 value
+ * 让 ref 不再去点 value（解包）
  * 以前：person.name.value，现在：person.name 就可以获取到值
  */
 export function proxyRefs(objectWithRefs) {
