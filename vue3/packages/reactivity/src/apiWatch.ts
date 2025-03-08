@@ -1,5 +1,7 @@
 import { isFunction, isObject } from "@vue/shared";
 import { ReactiveEffect } from './effect'
+import { isReactive } from './reactive'
+import { isRef } from './ref'
 
 export function watch(source, cb, options = {} as any) {
   return doWatch(source, cb, options)
@@ -9,8 +11,9 @@ function doWatch(source, cb, options) {
   // source 必须是 reactive，ref，getter
   let flag = false
   if (
-    Object.prototype.toString.call(source) === '[object Proxy]' 
-    || source.__v_isRef 
+    // Object.prototype.toString.call(source) === '[object Proxy]' 
+    isReactive(source)
+    || isRef(source)
     || isFunction(source)
   ) {
     flag = true
@@ -29,10 +32,6 @@ function doWatch(source, cb, options) {
 
   let oldValue
 
-  if (options.immediate) {
-    cb(oldValue, source)
-  }
-
   // 调度器，这里面去执行 watch 的回调函数
   const job = () => {
     const newValue = effect.run()
@@ -41,7 +40,19 @@ function doWatch(source, cb, options) {
     oldValue = newValue
   }
   const effect = new ReactiveEffect(getter, job)
-  oldValue = effect.run()
+
+  if (isFunction(cb)) {
+    // 立即先执行一次 watch 的第二个参数回调函数
+    if (options.immediate) {
+      job()
+    } else {
+      oldValue = effect.run() 
+    }
+  } else {
+
+  }
+
+  oldValue = effect.run() // 就会去执行 getter
 }
 
 /**
@@ -51,10 +62,11 @@ function forEachProperty(source, deep) {
   // source 为一个对象
 
   // source 为 ref 对象时，直接访问 value 就行了
-  if (source.__v_isRef) {
+  if (isRef(source)) {
     return source.value
   }
 
+  // source 为 reactive
   // deep: false 只遍历第一层，deep 为 true 深度遍历
   for (const key in source) {
     // 读取属性就会触发 get 函数，就会去收集依赖

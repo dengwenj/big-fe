@@ -204,6 +204,9 @@ function createReactiveObject(target) {
 function toReactive(value) {
   return isObject(value) ? reactive(value) : value;
 }
+function isReactive(value) {
+  return value && value["__pumu_isReactive" /* IS_REACTIVE */];
+}
 
 // packages/reactivity/src/ref.ts
 function ref(value) {
@@ -282,6 +285,9 @@ function proxyRefs(objectWithRefs) {
     }
   });
 }
+function isRef(value) {
+  return !!(value && value.__v_isRef);
+}
 
 // packages/reactivity/src/computed.ts
 function computed(getterOrOptions) {
@@ -338,7 +344,10 @@ function watch(source, cb, options = {}) {
 }
 function doWatch(source, cb, options) {
   let flag = false;
-  if (Object.prototype.toString.call(source) === "[object Proxy]" || source.__v_isRef || isFunction(source)) {
+  if (
+    // Object.prototype.toString.call(source) === '[object Proxy]' 
+    isReactive(source) || isRef(source) || isFunction(source)
+  ) {
     flag = true;
   }
   if (!flag) {
@@ -350,19 +359,24 @@ function doWatch(source, cb, options) {
     getter = () => forEachProperty(source, options.deep);
   }
   let oldValue;
-  if (options.immediate) {
-    cb(oldValue, source);
-  }
   const job = () => {
     const newValue = effect2.run();
     cb(newValue, oldValue);
     oldValue = newValue;
   };
   const effect2 = new ReactiveEffect(getter, job);
+  if (isFunction(cb)) {
+    if (options.immediate) {
+      job();
+    } else {
+      oldValue = effect2.run();
+    }
+  } else {
+  }
   oldValue = effect2.run();
 }
 function forEachProperty(source, deep) {
-  if (source.__v_isRef) {
+  if (isRef(source)) {
     return source.value;
   }
   for (const key in source) {
@@ -377,6 +391,8 @@ export {
   activeEffect,
   computed,
   effect,
+  isReactive,
+  isRef,
   proxyRefs,
   reactive,
   ref,

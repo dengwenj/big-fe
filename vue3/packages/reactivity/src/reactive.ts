@@ -33,3 +33,9 @@ function createReactiveObject(target) {
 export function toReactive(value) {
   return isObject(value) ? reactive(value) : value
 }
+
+export function isReactive(value) {
+  // 是 proxy 的就会去访问 get，get函数里面处理了如果是这个属性 ReactiveFlags.IS_REACTIVE 就返回 true
+  // 不是 proxy 直接就不会去访问 get 函数
+  return (value && value[ReactiveFlags.IS_REACTIVE])
+}
