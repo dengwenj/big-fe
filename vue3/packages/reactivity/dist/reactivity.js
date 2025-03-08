@@ -342,6 +342,9 @@ function triggerComputedRef(target, key, newValue, oldValue) {
 function watch(source, cb, options = {}) {
   return doWatch(source, cb, options);
 }
+function watchEffect(source, options = {}) {
+  return doWatch(source, null, options);
+}
 function doWatch(source, cb, options) {
   let flag = false;
   if (
@@ -351,7 +354,7 @@ function doWatch(source, cb, options) {
     flag = true;
   }
   if (!flag) {
-    console.warn(`source \u5FC5\u987B\u662F reactive ref getter`);
+    console.warn(`source \u5FC5\u987B\u662F reactive ref getter(effect)`);
     return;
   }
   let getter = source;
@@ -361,8 +364,10 @@ function doWatch(source, cb, options) {
   let oldValue;
   const job = () => {
     const newValue = effect2.run();
-    cb(newValue, oldValue);
-    oldValue = newValue;
+    if (isFunction(cb)) {
+      cb(newValue, oldValue);
+      oldValue = newValue;
+    }
   };
   const effect2 = new ReactiveEffect(getter, job);
   if (isFunction(cb)) {
@@ -372,8 +377,8 @@ function doWatch(source, cb, options) {
       oldValue = effect2.run();
     }
   } else {
+    effect2.run();
   }
-  oldValue = effect2.run();
 }
 function forEachProperty(source, deep) {
   if (isRef(source)) {
@@ -402,6 +407,7 @@ export {
   toRefs,
   trackComputedRef,
   triggerComputedRef,
-  watch
+  watch,
+  watchEffect
 };
 //# sourceMappingURL=reactivity.js.map

@@ -7,19 +7,22 @@ export function watch(source, cb, options = {} as any) {
   return doWatch(source, cb, options)
 }
 
+export function watchEffect(source, options = {} as any) {
+  // 没有 cb 就是 watchEffect
+  return doWatch(source, null, options)
+}
+
 function doWatch(source, cb, options) {
   // source 必须是 reactive，ref，getter
   let flag = false
   if (
     // Object.prototype.toString.call(source) === '[object Proxy]' 
-    isReactive(source)
-    || isRef(source)
-    || isFunction(source)
+    isReactive(source) || isRef(source) || isFunction(source)
   ) {
     flag = true
   }
   if (!flag) {
-    console.warn(`source 必须是 reactive ref getter`)
+    console.warn(`source 必须是 reactive ref getter(effect)`)
     return
   }
 
@@ -35,9 +38,11 @@ function doWatch(source, cb, options) {
   // 调度器，这里面去执行 watch 的回调函数
   const job = () => {
     const newValue = effect.run()
-    // 执行 watch 的第二个参数，数据变化后会调用这个函数
-    cb(newValue, oldValue)
-    oldValue = newValue
+    if (isFunction(cb)) {
+      // 执行 watch 的第二个参数，数据变化后会调用这个函数
+      cb(newValue, oldValue)
+      oldValue = newValue 
+    }
   }
   const effect = new ReactiveEffect(getter, job)
 
@@ -46,13 +51,12 @@ function doWatch(source, cb, options) {
     if (options.immediate) {
       job()
     } else {
-      oldValue = effect.run() 
+      oldValue = effect.run() // 会去执行 getter(effect)
     }
   } else {
-
+    // watchEffect
+    effect.run()
   }
-
-  oldValue = effect.run() // 就会去执行 getter
 }
 
 /**

@@ -9,7 +9,7 @@
   <script type="module">
     // import { watch, reactive, ref } from '../../../node_modules/vue/dist/vue.esm-browser.js'
 
-    import { watch, reactive, ref } from './reactivity.js'
+    import { watch, reactive, ref, watchEffect } from './reactivity.js'
 
     const state = reactive({ name: '朴睦', age: 25, address: { a: '上海市' } })
     // watch 当修改属性变化(第一个参数里的属性)，会调用第二个参数(回调函数)
@@ -22,24 +22,32 @@
     //   // immediate: true
     // })
 
-    watch(
-      // getter
-      () => state.name, 
-      (newValue, oldValue) => {
-        console.log(newValue, oldValue)
-      }, 
-      {
-        // deep: true,
-        // immediate: true
-      }
-    )
+    // watch(
+    //   // getter
+    //   () => state.name, 
+    //   (newValue, oldValue) => {
+    //     console.log(newValue, oldValue)
+    //   }, 
+    //   {
+    //     // deep: true,
+    //     // immediate: true
+    //   }
+    // )
 
     const name = ref("朴睦")
-    watch(name, (newValue, oldValue) => {
-      console.log(newValue, oldValue)
+    // watch(name, (newValue, oldValue) => {
+    //   console.log(newValue, oldValue)
+    // }, {
+    //   // deep: true,
+    //   // immediate: true
+    // })
+
+    // watchEffect 就相当于 effect
+    watchEffect(() => {
+      console.log(name.value)
     }, {
-      // deep: true,
-      // immediate: true
+      // 目前先不考虑同步和异步
+      // flush: 'sync'
     })
 
     setTimeout(() => {
@@ -47,6 +55,7 @@
       // state.address.a = '北京市'
 
       name.value = "王小波"
+      name.value = "李银河"
     }, 1000)
   </script>
 </body>
