@@ -2,6 +2,9 @@
 function isObject(obj) {
   return typeof obj === "object" && obj !== null;
 }
+function isFunction(obj) {
+  return typeof obj === "function";
+}
 
 // packages/reactivity/src/effect.ts
 function effect(fn, options) {
@@ -24,11 +27,20 @@ var ReactiveEffect = class {
     // 创建的 effect 是响应式的
     this.active = true;
     this.isRunning = false;
+    // computed 有用
+    this._dirtyLevel = 4 /* Dirty */;
     // 记录之前的
     this.cleanPreEffect = /* @__PURE__ */ new Map();
   }
+  get dirty() {
+    return this._dirtyLevel === 4 /* Dirty */;
+  }
+  set dirty(val) {
+    this._dirtyLevel = val ? 4 /* Dirty */ : 0 /* NoDirty */;
+  }
   // 执行 fn 函数，这个 fn 函数就是 effect 中的回调函数
   run() {
+    this._dirtyLevel = 0 /* NoDirty */;
     if (!this.active) {
       return this.fn();
     }
@@ -86,6 +98,9 @@ var ReactiveEffect = class {
 function targetEffects(effects) {
   for (const effect2 of effects) {
     if (effect2) {
+      if (effect2._dirtyLevel === 0 /* NoDirty */) {
+        effect2._dirtyLevel = 4 /* Dirty */;
+      }
       if (!effect2.isRunning) {
         effect2.schedulder();
       }
@@ -267,8 +282,59 @@ function proxyRefs(objectWithRefs) {
     }
   });
 }
+
+// packages/reactivity/src/computed.ts
+function computed(getterOrOptions) {
+  let getter;
+  let setter;
+  if (isFunction(getterOrOptions)) {
+    getter = getterOrOptions;
+  } else {
+    getter = getterOrOptions.get;
+    setter = getterOrOptions.set;
+  }
+  return new ComputedRefImpl(getter, setter);
+}
+var ComputedRefImpl = class _ComputedRefImpl {
+  constructor(getter, setter) {
+    this.getter = getter;
+    this.setter = setter;
+    this.effect = new ReactiveEffect(
+      () => getter(this._value),
+      // 第二个参数是个调度器
+      () => {
+        console.log(`
+          computed \u91CC\u9762\u4F9D\u8D56\u7684\u5C5E\u6027\u53D1\u751F\u4E86\u53D8\u5316\u6267\u884C\u8FD9\u91CC\uFF0C
+          \u539F\u5148\u8FD9\u91CC\u4F1A\u8C03\u7528 this.effect.run\uFF0C\u73B0\u5728\u4E0D\u76F4\u63A5\u8C03\u7528
+        `);
+        triggerComputedRef(this, _ComputedRefImpl.VALUE, null, null);
+      }
+    );
+  }
+  static {
+    this.VALUE = "value";
+  }
+  get value() {
+    if (this.effect.dirty) {
+      this._value = this.effect.run();
+    }
+    trackComputedRef(this, _ComputedRefImpl.VALUE);
+    return this._value;
+  }
+  set value(val) {
+    this.setter(val);
+  }
+};
+function trackComputedRef(target, key) {
+  track(target, key);
+}
+function triggerComputedRef(target, key, newValue, oldValue) {
+  trigger(target, key, newValue, oldValue);
+}
 export {
+  ReactiveEffect,
   activeEffect,
+  computed,
   effect,
   proxyRefs,
   reactive,
@@ -276,6 +342,8 @@ export {
   targetEffects,
   toReactive,
   toRef,
-  toRefs
+  toRefs,
+  trackComputedRef,
+  triggerComputedRef
 };
 //# sourceMappingURL=reactivity.js.map

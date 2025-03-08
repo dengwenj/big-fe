@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module">
+    // import { effect, reactive, ref, computed } from '../../../node_modules/@vue/reactivity/dist/reactivity.esm-browser.js'
+
+    import { computed, reactive, effect } from './reactivity.js'
+
+    // computed 执行后的结果是一个 ref，不可变的
+    // computed 中的回调函数默认不执行，当访问 computed 返回值(ref)的时候会执行回调函数
+    // 访问的这个值就是回调函数的返回值
+    const state = reactive({ name: '朴睦' })
+
+    const computedReturnRefVal = computed({
+      get() {
+        console.log("执行了多少次")
+        return state.name + "-25"
+      },
+      set(val) {
+        console.log(val)
+      }
+    })
+    // console.log(computedReturnRefVal.value)
+    // console.log(computedReturnRefVal.value)
+    // console.log(computedReturnRefVal.value)
+    // 多次访问只执行一次回调函数，后面取值拿的缓存的结果
+    // 缓存的实现：有个变量 dirty = false(是否是脏值) 来控制
+    // 如何回调函数里依赖的属性发生变化了，会把 dirty 变为 true
+    // console.log(computedReturnRefVal.value) // 访问了就会执行, 执行第一次， dirty = false
+    // console.log(computedReturnRefVal.value) // 从缓存中取数据 if(!dirty) 走缓存
+    // console.log(computedReturnRefVal.value) // 从缓存中取数据 if(!dirty) 走缓存
+
+    // state.name = 'ww' // 修改了 computed 回调函数中的属性，dirty 变成 true
+
+    // console.log(computedReturnRefVal.value) // 访问了就会执行, 执行第二次， dirty = false 
+    // console.log(computedReturnRefVal.value) // 从缓存中取数据 if(!dirty) 走缓存
+    // console.log(computedReturnRefVal.value) // 从缓存中取数据 if(!dirty) 走缓存
+
+    // 3、计算属性具备收集能力的，可以收集对应的 effect，计算属性中依赖的值变化后会触发 effect 重新执行
+    effect(() => {
+      console.log(computedReturnRefVal.value)
+      console.log(computedReturnRefVal.value)
+      console.log(computedReturnRefVal.value) 
+    })
+
+    setTimeout(() => {
+      state.name = '改变了哈哈哈'
+    }, 1000)
+
+    // 原理:
+    // 1、计算属性维护了一个 dirty 属性，默认就是 true，稍后运行过一次会将 dirty 变为 false，并且稍后依赖的值变化后会再次让 dirty 变为 true
+    // 2、计算属性也是一个 effect，依赖的属性会收集这个计算属性，当前值变化后，会让 computedEffect 里面 dirty 变为 true
+    // 3、计算属性具备收集能力的，可以收集对应的 effect，计算属性中依赖的值变化后会触发 effect 重新执行
+
+    // 计算属性 computedReturnRefVal，计算属性依赖的值 name
+    // 计算属性本身就是一个 effect，有一个标识 dirty = true，访问的时候会触发 name 属性的 get 方法(收集依赖)
+    // 将 name 属性和计算属性做一个映射，稍后 name 变化后会触发计算属性的 scheduler
+    // 计算属性可能在 effect 中使用，当取计算属性的时候，会对当前的 effect 进行依赖收集
+    // 如果 name 属性变化了，会通知计算属性将 dirty 变为 true（触发计算属性收集的 effect）
+    
+    // 每次运行后计算属性 effect 变为 NoDirty，不是脏值 false
+    // 当修改了属性后，脏值要变成 true
+
+    // name -> 计算属性 dirty = true -> 计算属性的 scheduler -> 触发计算属性收集的 effect
+  </script>
+</body>
+</html>
+ 

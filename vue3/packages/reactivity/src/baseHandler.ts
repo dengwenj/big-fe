@@ -1,10 +1,7 @@
 import { isObject } from "@vue/shared"
 import { track, trigger } from "./reactiveEffect"
 import { reactive } from './reactive'
-
-export enum ReactiveFlags {
-  IS_REACTIVE = "__pumu_isReactive"
-}
+import { ReactiveFlags } from "./constants"
 
 const person = {
   name: '朴睦',
