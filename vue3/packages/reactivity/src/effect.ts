@@ -136,6 +136,14 @@ export class ReactiveEffect {
 
     // 执行完后清除 null 的元素
   }
+
+  public stop() {
+    if (this.active) {
+      this.active = false
+      // 清除依赖
+      this.clearEffect()
+    }
+  }
 }
 
 export function targetEffects(effects: ReactiveEffect[]) {

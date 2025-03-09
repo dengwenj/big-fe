@@ -3,6 +3,10 @@ import { ReactiveEffect } from './effect'
 import { isReactive } from './reactive'
 import { isRef } from './ref'
 
+/**
+ * source 都要去转换成函数(effect)执行 主要是去收集依赖的，看哪些属性用的了这个回调函数，
+ * 当修改属性时，就会调用调度器函数，然后在调度器函数里做一些想做的事，比如：执行 watch 的第二个参数(callback)
+ */
 export function watch(source, cb, options = {} as any) {
   return doWatch(source, cb, options)
 }
@@ -57,6 +61,12 @@ function doWatch(source, cb, options) {
     // watchEffect
     effect.run()
   }
+
+  const unwatch = () => {
+    effect.stop()
+  }
+
+  return unwatch
 }
 
 /**

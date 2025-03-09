@@ -94,6 +94,12 @@ var ReactiveEffect = class {
       }
     });
   }
+  stop() {
+    if (this.active) {
+      this.active = false;
+      this.clearEffect();
+    }
+  }
 };
 function targetEffects(effects) {
   for (const effect2 of effects) {
@@ -379,6 +385,10 @@ function doWatch(source, cb, options) {
   } else {
     effect2.run();
   }
+  const unwatch = () => {
+    effect2.stop();
+  };
+  return unwatch;
 }
 function forEachProperty(source, deep) {
   if (isRef(source)) {

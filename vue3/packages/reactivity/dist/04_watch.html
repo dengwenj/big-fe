@@ -35,28 +35,31 @@
     // )
 
     const name = ref("朴睦")
-    // watch(name, (newValue, oldValue) => {
-    //   console.log(newValue, oldValue)
-    // }, {
-    //   // deep: true,
-    //   // immediate: true
-    // })
+    const unwatch = watch(name, (newValue, oldValue) => {
+      console.log(newValue, oldValue)
+    }, {
+      // deep: true,
+      // immediate: true
+    })
+    unwatch()
 
     // watchEffect 就相当于 effect
-    watchEffect(() => {
-      console.log(name.value)
-    }, {
-      // 目前先不考虑同步和异步
-      // flush: 'sync'
-    })
+    // watchEffect(() => {
+    //   console.log(name.value)
+    // }, {
+    //   // 目前先不考虑同步和异步
+    //   // flush: 'sync'
+    // })
 
     setTimeout(() => {
       // state.name = 'dwj'
       // state.address.a = '北京市'
 
       name.value = "王小波"
-      name.value = "李银河"
+      // name.value = "李银河"
     }, 1000)
+
+    // vue2 computed 和 watch 是基于 watcher 来实现的，vue3 是基于 effect 来实现的
   </script>
 </body>
 </html>
