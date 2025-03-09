@@ -39,12 +39,26 @@ function doWatch(source, cb, options) {
 
   let oldValue
 
+  let clean = null
+  // onCleanup 里的回调函数会在下一次调用 watch 第二个参数的时候 调用这个 回调函数
+  const onCleanup = (fn) => {
+    clean = () => {
+      fn()
+      clean = null
+    }
+  }
+
   // 调度器，这里面去执行 watch 的回调函数
   const job = () => {
     const newValue = effect.run()
     if (isFunction(cb)) {
+      if (clean) {
+        // 在执行回调前，先调用上一次的清理操作进行清理
+        clean()
+      }
+
       // 执行 watch 的第二个参数，数据变化后会调用这个函数
-      cb(newValue, oldValue)
+      cb(newValue, oldValue, onCleanup)
       oldValue = newValue 
     }
   }

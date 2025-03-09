@@ -368,10 +368,20 @@ function doWatch(source, cb, options) {
     getter = () => forEachProperty(source, options.deep);
   }
   let oldValue;
+  let clean = null;
+  const onCleanup = (fn) => {
+    clean = () => {
+      fn();
+      clean = null;
+    };
+  };
   const job = () => {
     const newValue = effect2.run();
     if (isFunction(cb)) {
-      cb(newValue, oldValue);
+      if (clean) {
+        clean();
+      }
+      cb(newValue, oldValue, onCleanup);
       oldValue = newValue;
     }
   };

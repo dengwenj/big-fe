@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import { watch, reactive, ref, watchEffect } from './reactivity.js'
+
+    const name = ref("朴睦")
+    let timer = 3000
+    watch(name, async (newValue, oldValue, onCleanup) => {
+      timer -= 1000
+      let flag = true
+
+      // onCleanup 里的回调函数会在下一次调用 watch 第二个参数的时候 调用这个 回调函数
+      // 配合异步使用
+      onCleanup(() => {
+        flag = false
+      })
+
+      const res = await getData(timer)
+      console.log(flag, newValue, 'ww')
+      // 闭包
+      // 用的是最后一次的结果
+      if (flag) {
+        app.innerHTML = res 
+      }
+    })
+
+    async function getData(timer) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(timer)
+        }, timer)
+      })
+    }
+
+    setTimeout(() => {
+      name.value = "王小波"
+      name.value = "李银河"
+    }, 1000)
+  </script>
+</body>
+
+</html>
