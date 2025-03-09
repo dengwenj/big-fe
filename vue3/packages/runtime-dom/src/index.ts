@@ -1,5 +1,6 @@
 import { nodeOps } from './nodeOps'
 import patchProp from './patchProp'
+import { createRenderer } from '@vue/runtime-core'
 
 // 合并
 const renderOptions = {
@@ -7,13 +8,9 @@ const renderOptions = {
   patchProp
 }
 
-function createRenderer(renderOptions) {
-  return {}
+export const render = (vNode, container) => {
+  // 默认调用内置的
+  return createRenderer(renderOptions).render(vNode, container)
 }
 
-createRenderer(renderOptions)
-
-export * from '@vue/reactivity'
-export {
-  renderOptions
-}
+export * from '@vue/runtime-core'

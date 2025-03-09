@@ -5,3 +5,5 @@ export function isObject(obj) {
 export function isFunction(obj) {
   return typeof obj === 'function'
 }
+
+export * from './shapeFlags'
