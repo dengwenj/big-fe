@@ -30,6 +30,10 @@ export function effect(fn: () => void, options: { schedulder: () => void }) {
 // 使用栈的情况是：当 effect 里面嵌套 effect 时用一个变量保存有问题，所以用栈
 export const activeEffect: ReactiveEffect[] = []
 
+/**
+ * 收集依赖 就是在收集这个实例
+ * 实例里面有个 run 方法，执行 run 方法就会触发用户传递进来的回调函数
+ */
 export class ReactiveEffect {
   // 创建的 effect 是响应式的
   public active = true
