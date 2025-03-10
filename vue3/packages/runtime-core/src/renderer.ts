@@ -72,8 +72,51 @@ export function createRenderer(renderOptions) {
     }
   }
 
-  const patchChildren = (n1, n2, container) => {
-    console.log(n1, n2, container)
+  const unmountChildren = (children) => {
+    for (const vnode of children) {
+      hostRemove(vnode.el)
+    }
+  }
+
+  // 1、新的是文本，老的是数组移除老的
+  // 2、新的是文本，老的也是文本，内容不相同替换
+  // 3、老的是数组，新的是数组，全量 diff 算法
+  // 4、老的是数组，新的不是数组，移除老的子节点
+  // 5、老的是文本，新的是空
+  // 6、老的是文本，新的是数组
+  const patchChildren = (n1, n2, el) => {
+    const c1 = n1.children
+    const c2 = n2.children
+    const preShapeFlag = n1.shapeFlag
+    const shapeFlag = n2.shapeFlag
+
+    if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      // 1
+      if (preShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        unmountChildren(c1)
+        hostSetElementText(el, c2)
+      } else if (preShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+        // 2
+        hostSetElementText(el, c2) 
+      }
+    } else {
+      // 3
+      if (preShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+          // 全量 diff
+        } else {
+          unmountChildren(c1)
+        }
+      } else {
+        if (preShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+          hostSetElementText(el, '') 
+        }
+
+        if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+          mountChildren(el, c2)
+        }
+      }
+    }
   }
 
   const patchElement = (n1, n2, container) => {
@@ -84,7 +127,7 @@ export function createRenderer(renderOptions) {
 
     patchProps(oldProps, newProps, el)
 
-    patchChildren(n1, n2, container)
+    patchChildren(n1, n2, el)
   }
 
   // 渲染和更新都走这里

@@ -68,8 +68,10 @@ function patchStyle(el, preVal, value) {
   }
   if (preVal) {
     for (const key in preVal) {
-      if (value[key] === null) {
-        style[key] = null;
+      if (value) {
+        if (value[key] === null) {
+          style[key] = null;
+        }
       }
     }
   }
@@ -200,15 +202,45 @@ function createRenderer(renderOptions2) {
       }
     }
   };
-  const patchChildren = (n1, n2, container) => {
-    console.log(n1, n2, container);
+  const unmountChildren = (children) => {
+    for (const vnode of children) {
+      hostRemove(vnode.el);
+    }
+  };
+  const patchChildren = (n1, n2, el) => {
+    const c1 = n1.children;
+    const c2 = n2.children;
+    const preShapeFlag = n1.shapeFlag;
+    const shapeFlag = n2.shapeFlag;
+    if (shapeFlag & 8 /* TEXT_CHILDREN */) {
+      if (preShapeFlag & 16 /* ARRAY_CHILDREN */) {
+        unmountChildren(c1);
+        hostSetElementText(el, c2);
+      } else if (preShapeFlag & 8 /* TEXT_CHILDREN */) {
+        hostSetElementText(el, c2);
+      }
+    } else {
+      if (preShapeFlag & 16 /* ARRAY_CHILDREN */) {
+        if (shapeFlag & 16 /* ARRAY_CHILDREN */) {
+        } else {
+          unmountChildren(c1);
+        }
+      } else {
+        if (preShapeFlag & 8 /* TEXT_CHILDREN */) {
+          hostSetElementText(el, "");
+        }
+        if (shapeFlag & 16 /* ARRAY_CHILDREN */) {
+          mountChildren(el, c2);
+        }
+      }
+    }
   };
   const patchElement = (n1, n2, container) => {
     const el = n2.el = n1.el;
     const oldProps = n1.props || {};
     const newProps = n2.props || {};
     patchProps(oldProps, newProps, el);
-    patchChildren(n1, n2, container);
+    patchChildren(n1, n2, el);
   };
   const patch = (n1, n2, container) => {
     if (n1 === n2) {

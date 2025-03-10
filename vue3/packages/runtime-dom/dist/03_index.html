@@ -13,8 +13,8 @@
     // import { h } from '../../../node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js'
 
     import { createRenderer, render, h, createVnode } from './runtime-dom.js'
-    const vnode1 = h('h1', {a: 1}, '你好')
-    const vnode2 = h('h1', { style: { color: 'red' } }, '世界')
+    const vnode1 = h('h1', {a: 1}, '文本')
+    const vnode2 = h('h1', { style: { color: 'red' } }, [h('div', '哈哈')])
 
     render(vnode1, app)
 

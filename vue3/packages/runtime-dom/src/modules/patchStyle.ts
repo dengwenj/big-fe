@@ -9,8 +9,10 @@ export default function patchStyle(el: HTMLDivElement, preVal, value) {
   if (preVal) {
     // 把老的有没用到的移除掉
     for (const key in preVal) {
-      if (value[key] === null) {
-        style[key] = null
+      if (value) {
+        if (value[key] === null) {
+          style[key] = null
+        } 
       }
     } 
   }
