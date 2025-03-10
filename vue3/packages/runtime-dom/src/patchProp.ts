@@ -7,7 +7,6 @@ import patchStyle from "./modules/patchStyle";
 
 // 内部调用的
 export default function patchProp(el: HTMLDivElement, key: string, preVal: any, value: any) {
-  console.log(el, key, preVal, value)
   if (key === 'class') {
     return patchClass(el, value)
   } else if(key === 'style') {

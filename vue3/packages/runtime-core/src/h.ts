@@ -2,6 +2,8 @@ import { isObject } from "@vue/shared"
 import { createVnode, isVnode } from "./createVnode"
 
 /**
+ * 创建虚拟 dom
+ * 
  * h(类型)
  * 
  * h(类型，属性)

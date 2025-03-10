@@ -13,16 +13,18 @@
     // import { h } from '../../../node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js'
 
     import { createRenderer, render, h, createVnode } from './runtime-dom.js'
-    const vnode1 = h('h1', {
-      style: { color: 'red' }
-    }, [h('p', '你好'), h('p', '世界')])
-    console.log(vnode1, 'vnode1')
-    
+    const vnode1 = h('h1', {a: 1}, '你好')
+    const vnode2 = h('h1', { style: { color: 'red' } }, '世界')
+
     render(vnode1, app)
 
     setTimeout(() => {
-
-    }, 3000)
+      render(vnode2, app)
+    }, 1000)
+    
+    // preVnode 和 vnode 的类型和 key 都一致说明是相同的节点
+    // 两个节点之间是有 diff 的，看两个元素是否是同一个元素，并且 key 也相同，则可以复用
+    // 如果不是同一个元素，则需要删除老的换新的，如果相同比较两个的差异 diff
   </script>
 </body>
 
