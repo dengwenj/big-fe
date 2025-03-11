@@ -108,7 +108,7 @@ function isSameVnode(n1, n2) {
   return n1.type === n2.type && n1.key === n2.key;
 }
 function createVnode(type, props, children) {
-  const shapeFlag = isString(type) ? 1 /* ELEMENT */ : 0;
+  const shapeFlag = isString(type) ? 1 /* ELEMENT */ : isObject(type) ? 4 /* STATEFUL_COMPONENT */ : 0;
   const vnode = {
     __v_isVnode: true,
     type,
@@ -156,7 +156,7 @@ function h(type, propsOrChildren, children) {
 // packages/runtime-core/src/seq.ts
 function getSequence(arr) {
   const result = [0];
-  const p = result.slice(0);
+  const p2 = result.slice(0);
   let start;
   let end;
   let middle;
@@ -166,7 +166,7 @@ function getSequence(arr) {
     if (arrI !== 0) {
       let resultLastIndex = result[result.length - 1];
       if (arr[resultLastIndex] < arrI) {
-        p[i] = result[result.length - 1];
+        p2[i] = result[result.length - 1];
         result.push(i);
         continue;
       }
@@ -182,7 +182,7 @@ function getSequence(arr) {
       }
     }
     if (arrI < arr[result[start]]) {
-      p[i] = result[start - 1];
+      p2[i] = result[start - 1];
       result[start] = i;
     }
   }
@@ -190,9 +190,272 @@ function getSequence(arr) {
   let last = result[l - 1];
   while (l-- > 0) {
     result[l] = last;
-    last = p[last];
+    last = p2[last];
   }
   return result;
+}
+
+// packages/reactivity/src/effect.ts
+var activeEffect = [];
+var ReactiveEffect = class {
+  constructor(fn, schedulder) {
+    this.fn = fn;
+    this.schedulder = schedulder;
+    // 创建的 effect 是响应式的
+    this.active = true;
+    this.isRunning = false;
+    // computed 有用
+    this._dirtyLevel = 4 /* Dirty */;
+    // 记录之前的
+    this.cleanPreEffect = /* @__PURE__ */ new Map();
+  }
+  get dirty() {
+    return this._dirtyLevel === 4 /* Dirty */;
+  }
+  set dirty(val) {
+    this._dirtyLevel = val ? 4 /* Dirty */ : 0 /* NoDirty */;
+  }
+  // 执行 fn 函数，这个 fn 函数就是 effect 中的回调函数
+  run() {
+    this._dirtyLevel = 0 /* NoDirty */;
+    if (!this.active) {
+      return this.fn();
+    }
+    try {
+      activeEffect.push(this);
+      this.clearEffect();
+      this.isRunning = true;
+      return this.fn();
+    } finally {
+      activeEffect.pop();
+      this.isRunning = false;
+    }
+  }
+  getCleanPreEffect() {
+    return this.cleanPreEffect;
+  }
+  setCleanPreEffect(effect, target, keyAndIndex) {
+    if (this.cleanPreEffect.has(effect)) {
+      const targetData = this.cleanPreEffect.get(effect);
+      if (targetData.has(target)) {
+        const preKeyAndIndex = targetData.get(target);
+        targetData.set(target, {
+          ...preKeyAndIndex,
+          ...keyAndIndex
+        });
+      } else {
+        targetData.set(target, keyAndIndex);
+      }
+    } else {
+      const targetData = /* @__PURE__ */ new Map();
+      targetData.set(target, keyAndIndex);
+      this.cleanPreEffect.set(effect, targetData);
+    }
+  }
+  /**
+   * vue 里面做的是拿老的依赖和新的依赖比对，没用的清除
+   * 我这里做的是直接把之前的依赖清除，没有比对
+   */
+  clearEffect() {
+    const targetToKeyAndIndex = this.cleanPreEffect.get(this);
+    if (!targetToKeyAndIndex) {
+      return;
+    }
+    targetToKeyAndIndex.forEach((val, target) => {
+      const effectsObj = targetMap.get(target);
+      const keys = Object.keys(val);
+      for (const key of keys) {
+        const effects = effectsObj[key];
+        const idx = val[key];
+        effects.splice(idx, 1, null);
+      }
+    });
+  }
+  stop() {
+    if (this.active) {
+      this.active = false;
+      this.clearEffect();
+    }
+  }
+};
+function targetEffects(effects) {
+  for (const effect of effects) {
+    if (effect) {
+      if (effect._dirtyLevel === 0 /* NoDirty */) {
+        effect._dirtyLevel = 4 /* Dirty */;
+      }
+      if (!effect.isRunning) {
+        effect.schedulder();
+      }
+    }
+  }
+}
+
+// packages/reactivity/src/reactiveEffect.ts
+var targetMap = /* @__PURE__ */ new WeakMap();
+function track(target, key) {
+  const _effect = activeEffect[activeEffect.length - 1];
+  if (_effect) {
+    let idx = -1;
+    if (targetMap.has(target)) {
+      const data = targetMap.get(target);
+      if (data[key]) {
+        data[key].push(_effect);
+        idx = data[key].length - 1;
+      } else {
+        data[key] = [_effect];
+        idx = 0;
+      }
+    } else {
+      targetMap.set(target, {
+        [key]: [_effect]
+      });
+      idx = 0;
+    }
+    _effect.setCleanPreEffect(_effect, target, { [key]: idx });
+  }
+}
+console.log(targetMap);
+function trigger(target, key, newValue, oldValue) {
+  if (!targetMap.has(target)) {
+    return;
+  }
+  const data = targetMap.get(target);
+  if (data[key]) {
+    targetEffects([...data[key]]);
+  }
+}
+
+// packages/reactivity/src/baseHandler.ts
+var person = {
+  name: "\u6734\u7766",
+  get cName() {
+    return this.name + "25";
+  }
+};
+var p = new Proxy(person, {
+  get(target, key, receiver) {
+    return Reflect.get(target, key, receiver);
+  },
+  set(target, key, val, receiver) {
+    return Reflect.set(target, key, val, receiver);
+  }
+});
+var mutableHandler = {
+  // receiver 代理对象
+  get(target, key, receiver) {
+    if (key === "__pumu_isReactive" /* IS_REACTIVE */) {
+      return true;
+    }
+    track(target, key);
+    const res = Reflect.get(target, key, receiver);
+    if (isObject(res)) {
+      return reactive(res);
+    }
+    return res;
+  },
+  set(target, key, newValue, receiver) {
+    const oldValue = target[key];
+    const res = Reflect.set(target, key, newValue, receiver);
+    if (oldValue !== newValue) {
+      trigger(target, key, newValue, oldValue);
+    }
+    return res;
+  }
+};
+
+// packages/reactivity/src/reactive.ts
+var reactiveMap = /* @__PURE__ */ new WeakMap();
+function reactive(target) {
+  return createReactiveObject(target);
+}
+function createReactiveObject(target) {
+  if (!isObject(target)) {
+    return target;
+  }
+  if (target["__pumu_isReactive" /* IS_REACTIVE */]) {
+    return target;
+  }
+  const exitsProxy = reactiveMap.get(target);
+  if (exitsProxy) {
+    return exitsProxy;
+  }
+  const proxy = new Proxy(target, mutableHandler);
+  reactiveMap.set(target, proxy);
+  return proxy;
+}
+function toReactive(value) {
+  return isObject(value) ? reactive(value) : value;
+}
+
+// packages/reactivity/src/ref.ts
+var RefImpl = class _RefImpl {
+  // 用来保存 ref 的值
+  constructor(rawValue) {
+    this.rawValue = rawValue;
+    this.__v_isRef = true;
+    this._value = toReactive(rawValue);
+  }
+  static {
+    this.VALUE = "value";
+  }
+  // get 时依赖收集
+  get value() {
+    trackRef(this, _RefImpl.VALUE);
+    return this._value;
+  }
+  // set 时派发更新
+  set value(newValue) {
+    if (newValue !== this.rawValue) {
+      this.rawValue = newValue;
+      this._value = newValue;
+      triggerRef(this, _RefImpl.VALUE, newValue, this.rawValue);
+    }
+  }
+};
+function trackRef(target, key) {
+  track(target, key);
+}
+function triggerRef(target, key, newValue, oldValue) {
+  trigger(target, key, newValue, oldValue);
+}
+
+// packages/reactivity/src/computed.ts
+var ComputedRefImpl = class _ComputedRefImpl {
+  constructor(getter, setter) {
+    this.getter = getter;
+    this.setter = setter;
+    this.effect = new ReactiveEffect(
+      () => getter(this._value),
+      // 第二个参数是个调度器
+      () => {
+        console.log(`
+          computed \u91CC\u9762\u4F9D\u8D56\u7684\u5C5E\u6027\u53D1\u751F\u4E86\u53D8\u5316\u6267\u884C\u8FD9\u91CC\uFF0C
+          \u539F\u5148\u8FD9\u91CC\u4F1A\u8C03\u7528 this.effect.run\uFF0C\u73B0\u5728\u4E0D\u76F4\u63A5\u8C03\u7528
+        `);
+        triggerComputedRef(this, _ComputedRefImpl.VALUE, null, null);
+      }
+    );
+  }
+  static {
+    this.VALUE = "value";
+  }
+  get value() {
+    if (this.effect.dirty) {
+      this._value = this.effect.run();
+    }
+    trackComputedRef(this, _ComputedRefImpl.VALUE);
+    return this._value;
+  }
+  set value(val) {
+    this.setter(val);
+  }
+};
+function trackComputedRef(target, key) {
+  track(target, key);
+}
+function triggerComputedRef(target, key, newValue, oldValue) {
+  trigger(target, key, newValue, oldValue);
 }
 
 // packages/runtime-core/src/renderer.ts
@@ -252,8 +515,6 @@ function createRenderer(renderOptions2) {
     }
   };
   const patchKeyedChildren = (c1, c2, el) => {
-    console.log(c1, c2, el);
-    console.log("------------------------------------------");
     let i = 0;
     let e1 = c1.length - 1;
     let e2 = c2.length - 1;
@@ -374,8 +635,10 @@ function createRenderer(renderOptions2) {
       n2.el = textNode;
       hostInsert(n2.el, container);
     } else {
-      n2.el = n1.el;
-      hostSetElementText(container, n2.children);
+      const el = n2.el = n1.el;
+      if (n1.children !== n2.children) {
+        hostSetText(el, n2.children);
+      }
     }
   };
   const processFragment = (n1, n2, container) => {
@@ -383,6 +646,46 @@ function createRenderer(renderOptions2) {
       mountChildren(container, n2.children);
     } else {
       patchChildren(n1, n2, container);
+    }
+  };
+  const mountComponent = (n2, container, anchor) => {
+    const { data = () => {
+    }, render: render3 } = n2.type;
+    const state = reactive(data());
+    const instance = {
+      data: state,
+      isMounted: false,
+      // 是否挂载完成
+      vnode: n2,
+      // 组件的虚拟节点
+      update: null,
+      // 组件的更新函数
+      subTree: null
+      // 组件 render 返回的虚拟节点
+    };
+    const componentUpdateFn = () => {
+      const subTree = render3.call(state, state);
+      if (!instance.isMounted) {
+        patch(null, subTree, container, anchor);
+        instance.isMounted = true;
+      } else {
+        patch(instance.subTree, subTree, container, anchor);
+      }
+      instance.subTree = subTree;
+    };
+    const effect = new ReactiveEffect(componentUpdateFn, () => {
+      update();
+    });
+    const update = () => {
+      effect.run();
+    };
+    update();
+    instance.update = update;
+  };
+  const processComponent = (n1, n2, container, anchor) => {
+    if (n1 === null) {
+      mountComponent(n2, container, anchor);
+    } else {
     }
   };
   const patch = (n1, n2, container, anchor = null) => {
@@ -394,7 +697,7 @@ function createRenderer(renderOptions2) {
       n1 = null;
       container._vnode = n2;
     }
-    const { type } = n2;
+    const { type, shapeFlag } = n2;
     switch (type) {
       case Text:
         processText(n1, n2, container);
@@ -403,7 +706,11 @@ function createRenderer(renderOptions2) {
         processFragment(n1, n2, container);
         break;
       default:
-        processElement(n1, n2, container, anchor);
+        if (shapeFlag & 6 /* COMPONENT */) {
+          processComponent(n1, n2, container, anchor);
+        } else {
+          processElement(n1, n2, container, anchor);
+        }
         break;
     }
   };

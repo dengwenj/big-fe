@@ -1,4 +1,4 @@
-import { isString, ShapeFlags } from "@vue/shared"
+import { isObject, isString, ShapeFlags } from "@vue/shared"
 
 export function isVnode(vnode) {
   return !!vnode.__v_isVnode
@@ -13,7 +13,11 @@ export function isSameVnode(n1, n2) {
 }
 
 export function createVnode(type, props, children) {
-  const shapeFlag = isString(type) ? ShapeFlags.ELEMENT : 0
+  const shapeFlag = isString(type) 
+    ? ShapeFlags.ELEMENT // 元素
+    : isObject(type)
+    ? ShapeFlags.STATEFUL_COMPONENT // 有状态的组件
+    : 0
   const vnode = {
     __v_isVnode: true,
     type,

@@ -1,6 +1,7 @@
 import { ShapeFlags } from "@vue/shared"
 import { Fragment, isSameVnode, Text } from './createVnode'
 import getSequence from "./seq"
+import { reactive, ReactiveEffect } from "@vue/reactivity"
 
 /**
  * 调用 h 函数 根据传入的参数 会创建出虚拟 dom(js 对象)
@@ -105,8 +106,6 @@ export function createRenderer(renderOptions) {
   // c1 c2 都是数组，diff 算法，全量 diff 全部都要比较还是比较消耗性能的
   // vue3 中分为两种 全量 diff（递归diff），快速 diff（靶向更新）-> 基于模版的
   const patchKeyedChildren = (c1, c2, el) => {
-    console.log(c1, c2, el)
-    console.log("------------------------------------------")
     // 1、减少比对范围，先从头开始比，在从尾部开始比较，确定不一样的范围
     // 2、从头比对，在从尾巴比对，如果有多余的或者新增的直接操作即可
 
@@ -270,8 +269,10 @@ export function createRenderer(renderOptions) {
       hostInsert(n2.el, container)
     } else {
       // 复用
-      n2.el = n1.el
-      hostSetElementText(container, n2.children)
+      const el = (n2.el = n1.el);
+      if (n1.children !== n2.children) {
+        hostSetText(el, n2.children);
+      }
     }
   }
 
@@ -280,6 +281,57 @@ export function createRenderer(renderOptions) {
       mountChildren(container, n2.children)
     } else {
       patchChildren(n1, n2, container)
+    }
+  }
+
+  // 没有以前的 vnode
+  const mountComponent = (n2, container, anchor) => {
+    // 类型是个组件，组件是个对象
+    const { data = () => {}, render } = n2.type
+
+    // 状态，组件可以基于自己的状态重新渲染 effect
+    const state = reactive(data())
+
+    // 当前组件
+    const instance = {
+      data: state,
+      isMounted: false, // 是否挂载完成
+      vnode: n2, // 组件的虚拟节点
+      update: null, // 组件的更新函数
+      subTree: null, // 组件 render 返回的虚拟节点
+    }
+
+    const componentUpdateFn = () => {
+      const subTree = render.call(state, state)
+      // 初始化
+      if (!instance.isMounted) {
+        patch(null, subTree, container, anchor)
+        instance.isMounted = true
+      } else {
+        // 基于状态的组件更新
+        patch(instance.subTree, subTree, container, anchor)
+      }
+      // 保存下组件 render 返回的虚拟节点
+      instance.subTree = subTree
+    }
+
+    const effect = new ReactiveEffect(componentUpdateFn, () => {
+      update()
+    })
+
+    const update = () => {
+      effect.run()
+    }
+    update()
+    instance.update = update
+  }
+
+  // vue 组件的渲染
+  const processComponent = (n1, n2, container, anchor) => {
+    if (n1 === null) {
+      mountComponent(n2, container, anchor)
+    } else {
+      
     }
   }
 
@@ -299,7 +351,7 @@ export function createRenderer(renderOptions) {
       container._vnode = n2
     }
 
-    const { type } = n2
+    const { type, shapeFlag } = n2
     switch (type) {
       case Text:
         processText(n1, n2, container)
@@ -310,7 +362,11 @@ export function createRenderer(renderOptions) {
         break;
     
       default:
-        processElement(n1, n2, container, anchor)
+        if (shapeFlag & ShapeFlags.COMPONENT) {
+          processComponent(n1, n2, container, anchor)
+        } else {
+          processElement(n1, n2, container, anchor)
+        }
         break;
     }
   }

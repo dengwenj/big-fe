@@ -13,20 +13,28 @@
     // import { h } from '../../../node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js'
 
     import { createRenderer, render, h, createVnode, Text, Fragment } from './runtime-dom.js'
-    const vnode1 = h(
-      Fragment,
-      [h('div', '你好'), h('div', '世界')]
-    )
-    const vnode2 = h(
-      Fragment,
-      [h('div', '嘿嘿'), h('div', '嘿嘿')]
-    )
-
-    render(vnode1, app)
-
-    setTimeout(() => {
-      render(null, app)
-    }, 3000)
+    
+    // vue 组件，就是一个对象
+    const VueComponent = {
+      data() {
+        return {
+          name: '朴睦',
+          age: 25
+        }
+      },
+      render(proxy) {
+        // setTimeout(() => {
+        //   this.age++
+        // }, 1000);
+        return h(Fragment, [
+          h(Text, '姓名:' + this.name),
+          h('div', '年龄：' + this.age)
+        ])
+      }
+    }
+    // 组件两个虚拟节点组成 h(VueComponent) = vnode 产生的是组件的虚拟节点
+    // VueComponent.render 函数返回的虚拟节点，这个虚拟节点才是最终渲染的内容 = subTree
+    render(h(VueComponent), app)
     
     // preVnode 和 vnode 的类型和 key 都一致说明是相同的节点
     // 两个节点之间是有 diff 的，看两个元素是否是同一个元素，并且 key 也相同，则可以复用
