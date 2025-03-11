@@ -102,6 +102,7 @@ function isString(val) {
 function isVnode(vnode) {
   return !!vnode.__v_isVnode;
 }
+var Text = Symbol("Text");
 function isSameVnode(n1, n2) {
   return n1.type === n2.type && n1.key === n2.key;
 }
@@ -366,6 +367,16 @@ function createRenderer(renderOptions2) {
     patchProps(oldProps, newProps, el);
     patchChildren(n1, n2, el);
   };
+  const processText = (n1, n2, container) => {
+    if (n1 === null) {
+      const textNode = hostCreateText(n2.children);
+      n2.el = textNode;
+      hostInsert(n2.el, container);
+    } else {
+      n2.el = n1.el;
+      hostSetElementText(container, n2.children);
+    }
+  };
   const patch = (n1, n2, container, anchor = null) => {
     if (n1 === n2) {
       return;
@@ -375,7 +386,15 @@ function createRenderer(renderOptions2) {
       n1 = null;
       container._vnode = n2;
     }
-    processElement(n1, n2, container, anchor);
+    const { type } = n2;
+    switch (type) {
+      case Text:
+        processText(n1, n2, container);
+        break;
+      default:
+        processElement(n1, n2, container, anchor);
+        break;
+    }
   };
   const unmount = (vnode) => {
     hostRemove(vnode.el);
@@ -385,9 +404,10 @@ function createRenderer(renderOptions2) {
       if (container._vnode) {
         unmount(container._vnode);
       }
+    } else {
+      patch(container._vnode || null, vnode, container);
+      container._vnode = vnode;
     }
-    patch(container._vnode || null, vnode, container);
-    container._vnode = vnode;
   };
   return {
     render: render2
@@ -403,6 +423,7 @@ var render = (vNode, container) => {
   return createRenderer(renderOptions).render(vNode, container);
 };
 export {
+  Text,
   createRenderer,
   createVnode,
   h,

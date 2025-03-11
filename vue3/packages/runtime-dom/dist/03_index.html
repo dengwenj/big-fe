@@ -12,31 +12,14 @@
   <script type="module">
     // import { h } from '../../../node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js'
 
-    import { createRenderer, render, h, createVnode } from './runtime-dom.js'
+    import { createRenderer, render, h, createVnode, Text } from './runtime-dom.js'
     const vnode1 = h(
-      'h1',
-      [
-        h('div', { key: 'a' }, 'a'),
-        h('div', { key: 'b' }, 'b'),
-        h('div', { key: 'c' }, 'c'),
-        h('div', { key: 'd' }, 'd'),
-        h('div', { key: 'e' }, 'e'),
-        h('div', { key: 'f' }, 'f'),
-        h('div', { key: 'g' }, 'g'),
-      ]
+      Text,
+      "你好"
     )
     const vnode2 = h(
-      'h1',
-      [
-        h('div', { key: 'a' }, 'a'),
-        h('div', { key: 'b' }, 'b'),
-        h('div', { key: 'e' }, 'e'),
-        h('div', { key: 'c' }, 'c'),
-        h('div', { key: 'd' }, 'd'),
-        h('div', { key: 'h' }, 'h'),
-        h('div', { key: 'f' }, 'f'),
-        h('div', { key: 'g' }, 'g'),
-      ]
+      Text,
+      "世界"
     )
 
     render(vnode1, app)

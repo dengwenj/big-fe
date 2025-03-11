@@ -1,5 +1,5 @@
 import { ShapeFlags } from "@vue/shared"
-import { isSameVnode } from './createVnode'
+import { isSameVnode, Text } from './createVnode'
 import getSequence from "./seq"
 
 /**
@@ -262,6 +262,18 @@ export function createRenderer(renderOptions) {
 
     patchChildren(n1, n2, el)
   }
+  
+  const processText = (n1, n2, container) => {
+    if (n1 === null) {
+      const textNode = hostCreateText(n2.children)
+      n2.el = textNode
+      hostInsert(n2.el, container)
+    } else {
+      // 复用
+      n2.el = n1.el
+      hostSetElementText(container, n2.children)
+    }
+  }
 
   // 渲染和更新都走这里
   const patch = (n1, n2, container, anchor = null) => {
@@ -279,7 +291,16 @@ export function createRenderer(renderOptions) {
       container._vnode = n2
     }
 
-    processElement(n1, n2, container, anchor)
+    const { type } = n2
+    switch (type) {
+      case Text:
+        processText(n1, n2, container)
+        break;
+    
+      default:
+        processElement(n1, n2, container, anchor)
+        break;
+    }
   }
 
   // 删除
@@ -295,12 +316,12 @@ export function createRenderer(renderOptions) {
         // 删除
         unmount(container._vnode)
       }
+    } else {
+      // 将虚拟节点变成真实节点渲染
+      patch(container._vnode || null, vnode, container)
+      // 把之前的vnode保存，后面会做 diff
+      container._vnode = vnode
     }
-
-    // 将虚拟节点变成真实节点渲染
-    patch(container._vnode || null, vnode, container)
-    // 把之前的vnode保存，后面会做 diff
-    container._vnode = vnode
   }
 
   return {
