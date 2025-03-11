@@ -2,6 +2,9 @@ import { ShapeFlags } from "@vue/shared"
 import { isSameVnode } from './createVnode'
 
 /**
+ * 调用 h 函数 根据传入的参数 会创建出虚拟 dom(js 对象)
+ * 然后再把虚拟 dom 传入 render 函数，render 函数就会根据 虚拟dom 生成 真实dom
+ * 
  * 渲染器，可以把虚拟 dom 渲染成真实 dom
  */
 export function createRenderer(renderOptions) {
@@ -23,7 +26,7 @@ export function createRenderer(renderOptions) {
     }
   }
 
-  const mountElement = (n2, container) => {
+  const mountElement = (n2, container, anchor) => {
     const { shapeFlag, type, children, props }  = n2
 
     const ele = hostCreateElement(type)
@@ -44,13 +47,13 @@ export function createRenderer(renderOptions) {
       mountChildren(ele, children)
     }
 
-    hostInsert(ele, container)
+    hostInsert(ele, container, anchor)
   }
 
-  const processElement = (n1, n2, container) => {
+  const processElement = (n1, n2, container, anchor) => {
     // 说明是初始化
     if (n1 === null) {
-      mountElement(n2, container)
+      mountElement(n2, container, anchor)
     } else {
       // preVnode 和 vnode 的类型和 key 都一致说明是相同的节点
       // 复用，更新属性和内容就行
@@ -75,6 +78,123 @@ export function createRenderer(renderOptions) {
   const unmountChildren = (children) => {
     for (const vnode of children) {
       hostRemove(vnode.el)
+    }
+  }
+
+  
+  // const vnode1 = h(
+  //   'h1',
+  //   [
+  //     h('div', { key: 'b' }, 'b'),
+  //     h('div', { key: 'a' }, 'a'),
+  //     h('div', { key: 'c' }, 'c')
+  //   ]
+  // )
+  // const vnode2 = h(
+  //   'h1',
+  //   [
+  //     h('div', { key: 'a' }, 'a'),
+  //     h('div', { key: 'b' }, 'b'),
+  //     h('div', { key: 'c' }, 'c'),
+  //     h('div', { key: 'd' }, 'd'),
+  //     h('div', { key: 'e' }, 'e'),
+  //   ]
+  // )
+  // h 函数孩子都是数组的时候会进行 diff 算法
+  // c1 c2 都是数组，diff 算法
+  const patchKeyedChildren = (c1, c2, el) => {
+    console.log(c1, c2, el)
+    console.log("------------------------------------------")
+    // 1、减少比对范围，先从头开始比，在从尾部开始比较，确定不一样的范围
+    // 2、从头比对，在从尾巴比对，如果有多余的或者新增的直接操作即可
+
+    // 开始比对的索引
+    let i = 0
+    let e1 = c1.length - 1 // 第一个数组的尾部索引
+    let e2 = c2.length - 1 // 第二个数组的尾部索引
+
+    // [a, b, c]
+    // [a, b, c, d, e]
+    // 从头开始比
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[i]
+      const n2 = c2[i]
+      if (isSameVnode(n1, n2)) {
+        patch(n1, n2, el)
+      } else {
+        break
+      }
+      i++
+    }
+
+    // [a, b, c]
+    // [a, b, c, d, e]
+    // 从尾开始比
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[i]
+      const n2 = c2[i]
+      if (isSameVnode(n1, n2)) {
+        patch(n1, n2, el)
+      } else {
+        break
+      }
+      e1--
+      e2--
+    }
+
+    if (i > e1) {
+      // 新的多
+      if (i <= e2) {
+        // 有插入的部分
+        let nextPos = e2 + 1 // 当前下一个元素是否存在
+        let anchor = c2[nextPos]?.el
+        while (i <= e2) {
+          patch(null, c2[i], el, anchor)
+          i++
+        }
+      }
+    } else if (i > e2) { // 老的多
+      if (i <= e1) {
+        while (i <= e1) {
+          unmount(c1[i]) // 将元素一个一个删除
+          i++
+        }
+      }
+    } else {
+      // a b c [d f e] g k
+      // a b c [e d f h] g k
+      let s1 = i
+      let s2 = i
+
+      const keyToNewIndexMap = new Map()
+      for (let i = s2; i <= e2; i++) {
+        const vnode = c2[i]
+        keyToNewIndexMap.set(vnode.key, i)
+      }
+      for (let i = s1; i <= e1; i++) {
+        const vnode = c1[i]
+        // 通过 key 找到对应的索引
+        const newIndex = keyToNewIndexMap.get(vnode.key)
+        if (newIndex === undefined) {
+          // 新的里面找不到，老的里面要删除
+          unmount(vnode)
+        } else {
+          patch(vnode, c2[newIndex], el) // 复用
+        }
+      }
+
+      // 调整顺序
+      let toBepatched = e2 - s2 + 1
+      for (let i = toBepatched - 1; i >= 0; i--) {
+        let newIndex = s2 + i
+        let anchor = c2[newIndex + 1]?.el
+        let vnode = c2[newIndex]
+        if (!vnode.el) {
+          patch(null, vnode, el, anchor)
+        } else {
+          hostInsert(vnode.el, el, anchor)
+        }
+      }
     }
   }
 
@@ -104,6 +224,7 @@ export function createRenderer(renderOptions) {
       if (preShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
           // 全量 diff
+          patchKeyedChildren(c1, c2, el)
         } else {
           unmountChildren(c1)
         }
@@ -131,7 +252,7 @@ export function createRenderer(renderOptions) {
   }
 
   // 渲染和更新都走这里
-  const patch = (n1, n2, container) => {
+  const patch = (n1, n2, container, anchor = null) => {
     // 说明是同一个 vnode
     if (n1 === n2) {
       return
@@ -146,7 +267,7 @@ export function createRenderer(renderOptions) {
       container._vnode = n2
     }
 
-    processElement(n1, n2, container)
+    processElement(n1, n2, container, anchor)
   }
 
   // 删除

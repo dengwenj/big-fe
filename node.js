@@ -49,3 +49,11 @@ myMap.set('key', obj);
 myMap.forEach((value, key) => {
   console.log(`${key}:`, value);
 });
+
+const p1 = Promise.resolve('首饰')
+const p2 = new Promise((resolve) => {
+  resolve(p1)
+})
+
+console.log(p1)
+console.log(p2)
