@@ -12,20 +12,20 @@
   <script type="module">
     // import { h } from '../../../node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js'
 
-    import { createRenderer, render, h, createVnode, Text } from './runtime-dom.js'
+    import { createRenderer, render, h, createVnode, Text, Fragment } from './runtime-dom.js'
     const vnode1 = h(
-      Text,
-      "你好"
+      Fragment,
+      [h('div', '你好'), h('div', '世界')]
     )
     const vnode2 = h(
-      Text,
-      "世界"
+      Fragment,
+      [h('div', '嘿嘿'), h('div', '嘿嘿')]
     )
 
     render(vnode1, app)
 
     setTimeout(() => {
-      render(vnode2, app)
+      render(null, app)
     }, 3000)
     
     // preVnode 和 vnode 的类型和 key 都一致说明是相同的节点

@@ -103,6 +103,7 @@ function isVnode(vnode) {
   return !!vnode.__v_isVnode;
 }
 var Text = Symbol("Text");
+var Fragment = Symbol("Fragment");
 function isSameVnode(n1, n2) {
   return n1.type === n2.type && n1.key === n2.key;
 }
@@ -377,6 +378,13 @@ function createRenderer(renderOptions2) {
       hostSetElementText(container, n2.children);
     }
   };
+  const processFragment = (n1, n2, container) => {
+    if (n1 === null) {
+      mountChildren(container, n2.children);
+    } else {
+      patchChildren(n1, n2, container);
+    }
+  };
   const patch = (n1, n2, container, anchor = null) => {
     if (n1 === n2) {
       return;
@@ -391,13 +399,20 @@ function createRenderer(renderOptions2) {
       case Text:
         processText(n1, n2, container);
         break;
+      case Fragment:
+        processFragment(n1, n2, container);
+        break;
       default:
         processElement(n1, n2, container, anchor);
         break;
     }
   };
   const unmount = (vnode) => {
-    hostRemove(vnode.el);
+    if (vnode.type === Fragment) {
+      unmountChildren(vnode.children);
+    } else {
+      hostRemove(vnode.el);
+    }
   };
   const render2 = (vnode, container) => {
     if (vnode === null) {
@@ -423,6 +438,7 @@ var render = (vNode, container) => {
   return createRenderer(renderOptions).render(vNode, container);
 };
 export {
+  Fragment,
   Text,
   createRenderer,
   createVnode,

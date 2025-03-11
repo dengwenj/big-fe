@@ -1,5 +1,5 @@
 import { ShapeFlags } from "@vue/shared"
-import { isSameVnode, Text } from './createVnode'
+import { Fragment, isSameVnode, Text } from './createVnode'
 import getSequence from "./seq"
 
 /**
@@ -275,6 +275,14 @@ export function createRenderer(renderOptions) {
     }
   }
 
+  const processFragment = (n1, n2, container) => {
+    if (n1 === null) {
+      mountChildren(container, n2.children)
+    } else {
+      patchChildren(n1, n2, container)
+    }
+  }
+
   // 渲染和更新都走这里
   const patch = (n1, n2, container, anchor = null) => {
     // 说明是同一个 vnode
@@ -296,6 +304,10 @@ export function createRenderer(renderOptions) {
       case Text:
         processText(n1, n2, container)
         break;
+      
+      case Fragment:
+        processFragment(n1, n2, container)
+        break;
     
       default:
         processElement(n1, n2, container, anchor)
@@ -305,7 +317,11 @@ export function createRenderer(renderOptions) {
 
   // 删除
   const unmount = (vnode) => {
-    hostRemove(vnode.el)
+    if (vnode.type === Fragment) {
+      unmountChildren(vnode.children)
+    } else {
+      hostRemove(vnode.el)
+    }
   }
 
   // 多次调用 render 会进入虚拟节点的比较，再进行更新
