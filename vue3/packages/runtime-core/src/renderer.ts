@@ -1,5 +1,6 @@
 import { ShapeFlags } from "@vue/shared"
 import { isSameVnode } from './createVnode'
+import getSequence from "./seq"
 
 /**
  * 调用 h 函数 根据传入的参数 会创建出虚拟 dom(js 对象)
@@ -101,7 +102,8 @@ export function createRenderer(renderOptions) {
   //   ]
   // )
   // h 函数孩子都是数组的时候会进行 diff 算法
-  // c1 c2 都是数组，diff 算法
+  // c1 c2 都是数组，diff 算法，全量 diff 全部都要比较还是比较消耗性能的
+  // vue3 中分为两种 全量 diff（递归diff），快速 diff（靶向更新）-> 基于模版的
   const patchKeyedChildren = (c1, c2, el) => {
     console.log(c1, c2, el)
     console.log("------------------------------------------")
@@ -131,8 +133,8 @@ export function createRenderer(renderOptions) {
     // [a, b, c, d, e]
     // 从尾开始比
     while (i <= e1 && i <= e2) {
-      const n1 = c1[i]
-      const n2 = c2[i]
+      const n1 = c1[e1]
+      const n2 = c2[e2]
       if (isSameVnode(n1, n2)) {
         patch(n1, n2, el)
       } else {
@@ -167,6 +169,10 @@ export function createRenderer(renderOptions) {
       let s2 = i
 
       const keyToNewIndexMap = new Map()
+
+      let toBepatched = e2 - s2 + 1
+      let newIndexToOldMapIndex = new Array(toBepatched).fill(0)
+
       for (let i = s2; i <= e2; i++) {
         const vnode = c2[i]
         keyToNewIndexMap.set(vnode.key, i)
@@ -179,12 +185,14 @@ export function createRenderer(renderOptions) {
           // 新的里面找不到，老的里面要删除
           unmount(vnode)
         } else {
+          newIndexToOldMapIndex[newIndex - s2] = i + 1
           patch(vnode, c2[newIndex], el) // 复用
         }
       }
 
+      const seq = getSequence(newIndexToOldMapIndex)
+      let j = seq.length - 1
       // 调整顺序
-      let toBepatched = e2 - s2 + 1
       for (let i = toBepatched - 1; i >= 0; i--) {
         let newIndex = s2 + i
         let anchor = c2[newIndex + 1]?.el
@@ -192,7 +200,11 @@ export function createRenderer(renderOptions) {
         if (!vnode.el) {
           patch(null, vnode, el, anchor)
         } else {
-          hostInsert(vnode.el, el, anchor)
+          if (i === seq[j]) {
+            j--
+          } else {
+            hostInsert(vnode.el, el, anchor)
+          }
         }
       }
     }

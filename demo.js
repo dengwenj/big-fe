@@ -182,12 +182,17 @@
 // })
 
 
+/**
+ * 贪心 + 二分搜索思想
+ * 贪心的思想在于，对于每个新元素，尽可能地将其插入到合适的位置，以使得元素尽可能小，这样后续能更容易地找到更长的递增子序列
+ * 先贪心 再记录当前的元素和它的前一个元素
+ */
 // 最长递增子序列
 // 先求出最长递增子序列的个数有多少个
 // 2 3 1 5 6 8 7 9 4 2
 // 2（2的前一个是 null）
 // 2 3（3的前一个是2）
-// 1 3（1的前一个是null）
+// 1 3（1的前一个是null）// 贪心 把2换成了1
 // 1 3 5（5的前一个是3）
 // 1 3 5 6（6的前一个是5）
 // 1 3 5 6 8（8的前一个是6）
@@ -217,13 +222,28 @@ for (let i = 0; i < arr.length; i++) {
     } else {
       // 找出最有潜力的
       let index = -1
-      for (let j = 0; j < storage.length; j++) {
-        const itex = storage[j]
-        if (itex > item) {
-          index = j
+      let start = 0
+      let end = storage.length - 1
+      let middle
+      // 二分查找
+      while (start <= end) {
+        middle = ~~((start + end) / 2)
+        if (storage[middle] === item) {
+          index = middle
           break
+        } else if (storage[middle] < item) {
+          start = middle + 1
+        } else if (storage[middle] > item) {
+          end = middle - 1
         }
       }
+      // for (let j = 0; j < storage.length; j++) {
+      //   const itex = storage[j]
+      //   if (itex > item) {
+      //     index = j
+      //     break
+      //   }
+      // }
       const preVal = storage[index - 1] || null
       storage[index] = item
       mark.push([preVal, item])
@@ -256,3 +276,44 @@ for (let i = a.length - 1; i >= 0; i--) {
 }
 res.reverse()
 console.log('最终结果：', res)
+
+// const find = 6
+// const er = [1, 4, 6, 8, 9, 10]
+// let start = 0
+// let end = er.length - 1
+// let middle
+// while (start < end) {
+//   middle = ~~((start + end) / 2)
+//   if (er[middle] < find) {
+//     start = middle + 1
+//   } else {
+//     end = middle
+//   }
+// }
+
+const find = 6;
+const er = [1, 4, 6, 8, 9, 10];
+let start = 0;
+let end = er.length - 1;
+let middle;
+let found = false;
+let index = -1;
+
+while (start <= end) {
+  middle = Math.floor((start + end) / 2);
+  if (er[middle] === find) {
+    found = true;
+    index = middle;
+    break;
+  } else if (er[middle] < find) {
+    start = middle + 1;
+  } else {
+    end = middle - 1;
+  }
+}
+
+if (found) {
+  console.log(`找到了目标元素 ${find}，其索引位置是 ${index}`);
+} else {
+  console.log(`未找到目标元素 ${find}`);
+}
