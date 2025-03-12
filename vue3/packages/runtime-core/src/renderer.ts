@@ -286,16 +286,29 @@ export function createRenderer(renderOptions) {
     }
   }
 
-  function setupRenderEffect(instance, container, anchor) {
-    const { render } = instance
+  const updateComponentPreRender = (instance, next) => {
+    instance.next = null
+    instance.vnode = next 
+    updateProps(instance, instance.props, next.props)
+  }
 
+  function setupRenderEffect(instance, container, anchor) {
     const componentUpdateFn = () => {
-      const subTree = render.call(instance.proxy, instance.proxy)
+      const { render, next } = instance
+
+      let subTree
       // 初始化
       if (!instance.isMounted) {
+        subTree = render.call(instance.proxy, instance.proxy)
         patch(null, subTree, container, anchor)
         instance.isMounted = true
       } else {
+        // 说明是属性或者插槽更新
+        if (next) {
+          updateComponentPreRender(instance, next)
+        }
+        
+        subTree = render.call(instance.proxy, instance.proxy)
         // 基于状态的组件更新 -> 就是组件对象里面的状态更新
         patch(instance.subTree, subTree, container, anchor)
       }
@@ -347,13 +360,7 @@ export function createRenderer(renderOptions) {
     }
   }
 
-  const updateComponent = (n1, n2) => {
-    // 获取到子组件的实例
-    const instance = (n2.component = n1.component)
-    // 组件属性是否变化
-    const { props: preProps } = n1
-    const { props: nextProps } = n2
-
+  const updateProps = (instance, preProps, nextProps) => {
     // 说明 props 修改过
     if (hasPropsChange(preProps, nextProps)) {
       // 用最新的 props
@@ -367,6 +374,36 @@ export function createRenderer(renderOptions) {
           delete instance.props[key]
         }
       }
+    }
+  }
+
+  const shouldComponentUpdate = (n1, n2) => {
+    // 组件属性是否变化，插槽是否有变化
+    const { props: preProps, children: preChildren } = n1
+    const { props: nextProps, children: nextChildren } = n2
+
+    // 有插槽直接走重新渲染
+    if (preChildren || nextChildren) {
+      return true
+    }
+
+    if (preProps === nextProps) {
+      return false
+    }
+
+    // 属性是否更新
+    return hasPropsChange(n1, n2)
+  }
+
+  const updateComponent = (n1, n2) => {
+    // 获取到组件的实例
+    const instance = (n2.component = n1.component)
+
+    // 组件是否要更新
+    if (shouldComponentUpdate(n1, n2)) {
+      // 标记下，调用 update 时，有 next 说明是属性或者插槽更新
+      instance.next = n2
+      instance.update()
     }
   }
 

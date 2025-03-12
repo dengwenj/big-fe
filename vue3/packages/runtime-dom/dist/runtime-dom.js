@@ -761,14 +761,24 @@ function createRenderer(renderOptions2) {
       patchChildren(n1, n2, container);
     }
   };
+  const updateComponentPreRender = (instance, next) => {
+    instance.next = null;
+    instance.vnode = next;
+    updateProps(instance, instance.props, next.props);
+  };
   function setupRenderEffect(instance, container, anchor) {
-    const { render: render3 } = instance;
     const componentUpdateFn = () => {
-      const subTree = render3.call(instance.proxy, instance.proxy);
+      const { render: render3, next } = instance;
+      let subTree;
       if (!instance.isMounted) {
+        subTree = render3.call(instance.proxy, instance.proxy);
         patch(null, subTree, container, anchor);
         instance.isMounted = true;
       } else {
+        if (next) {
+          updateComponentPreRender(instance, next);
+        }
+        subTree = render3.call(instance.proxy, instance.proxy);
         patch(instance.subTree, subTree, container, anchor);
       }
       instance.subTree = subTree;
@@ -800,10 +810,7 @@ function createRenderer(renderOptions2) {
       }
     }
   };
-  const updateComponent = (n1, n2) => {
-    const instance = n2.component = n1.component;
-    const { props: preProps } = n1;
-    const { props: nextProps } = n2;
+  const updateProps = (instance, preProps, nextProps) => {
     if (hasPropsChange(preProps, nextProps)) {
       for (const key in nextProps) {
         instance.props[key] = nextProps[key];
@@ -813,6 +820,24 @@ function createRenderer(renderOptions2) {
           delete instance.props[key];
         }
       }
+    }
+  };
+  const shouldComponentUpdate = (n1, n2) => {
+    const { props: preProps, children: preChildren } = n1;
+    const { props: nextProps, children: nextChildren } = n2;
+    if (preChildren || nextChildren) {
+      return true;
+    }
+    if (preProps === nextProps) {
+      return false;
+    }
+    return hasPropsChange(n1, n2);
+  };
+  const updateComponent = (n1, n2) => {
+    const instance = n2.component = n1.component;
+    if (shouldComponentUpdate(n1, n2)) {
+      instance.next = n2;
+      instance.update();
     }
   };
   const processComponent = (n1, n2, container, anchor) => {
