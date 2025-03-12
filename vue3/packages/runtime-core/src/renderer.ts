@@ -1,4 +1,4 @@
-import { ShapeFlags } from "@vue/shared"
+import { hasOwn, ShapeFlags } from "@vue/shared"
 import { Fragment, isSameVnode, Text } from './createVnode'
 import getSequence from "./seq"
 import { reactive, ReactiveEffect } from "@vue/reactivity"
@@ -299,7 +299,6 @@ export function createRenderer(renderOptions) {
     }
     instance.props = reactive(props) // vue3 里面这个没有用深度代理
     instance.attrs = attrs
-    console.log(instance, 'instance')
   }
 
   // 初始化组件
@@ -320,9 +319,10 @@ export function createRenderer(renderOptions) {
       propsOptions, // 组件实例对象上的 props,
       attrs: {}, // 所有属性 - propsOptions = attrs
       props: {}, // 响应式的，组件实例对象上的 props
-      component: null
+      component: null,
+      proxy: null, // 用来代理 props attrs data 让用户更方便的使用
     }
-    vnode.component = vnode.type
+    vnode.component = instance
 
     // 元素更新 n2.el = n1.el
     // 组件更新 n2.component.subTree.el = n1.component.subTree.el
@@ -330,8 +330,53 @@ export function createRenderer(renderOptions) {
     // 初始化属性
     initProps(instance, vnode.props)
 
+    const publicProperty = {
+      $attrs: (instance) => instance.attrs
+      // ...
+    }
+
+    // 组件的代理对象
+    instance.proxy = new Proxy(instance, {
+      get(target, key, receiver) {
+        // data props
+        // data.name props.ww 全都变成代理  proxy.name 就会去访问 data.name, proxy.ww 就会去访问 props.ww
+        const { data, props } = target
+
+        // data
+        if (data && hasOwn(data, key)) {
+          return data[key]
+        }
+
+        // props
+        if (props && hasOwn(props, key)) {
+          return props[key]
+        }
+
+        const getter = publicProperty[key] // 不同的属性有不同的策略
+        if (getter) {
+          return getter(target)
+        }
+        // $slots $attrs 无法修改，只读
+      },
+      set(target, key, newValue, receiver) {
+        const { data, props } = target
+
+        // data
+        if (data && hasOwn(data, key)) {
+          data[key] = newValue
+        }
+
+        // props
+        if (props && hasOwn(props, key)) {
+          console.warn(`props.${key.toString()} is readonly`)
+          return false
+        }
+        return true
+      },
+    })
+
     const componentUpdateFn = () => {
-      const subTree = render.call(state, state)
+      const subTree = render.call(instance.proxy, instance.proxy)
       // 初始化
       if (!instance.isMounted) {
         patch(null, subTree, container, anchor)

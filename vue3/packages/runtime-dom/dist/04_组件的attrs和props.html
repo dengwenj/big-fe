@@ -22,14 +22,21 @@
         name: String,
         age: Number
       },
+      data() {
+        return {
+          x: 'x',
+          y: 'y'
+        }
+      },
       render(proxy) {
+        console.log(proxy)
         setTimeout(() => {
           // this.age++
           // this.age++
         }, 1000);
         return h(Fragment, [
-          h(Text, '姓名:'),
-          h('div', '年龄：')
+          h(Text, '姓名:' + proxy.x + proxy.$attrs.a),
+          h('div', '年龄：' + proxy.age)
         ])
       }
     }

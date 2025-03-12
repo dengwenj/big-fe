@@ -97,6 +97,8 @@ function isObject(obj) {
 function isString(val) {
   return typeof val === "string";
 }
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+var hasOwn = (value, key) => hasOwnProperty.call(value, key);
 
 // packages/runtime-core/src/createVnode.ts
 function isVnode(vnode) {
@@ -684,7 +686,6 @@ function createRenderer(renderOptions2) {
     }
     instance.props = reactive(props);
     instance.attrs = attrs;
-    console.log(instance, "instance");
   };
   const mountComponent = (vnode, container, anchor) => {
     const { data = () => {
@@ -706,12 +707,44 @@ function createRenderer(renderOptions2) {
       // 所有属性 - propsOptions = attrs
       props: {},
       // 响应式的，组件实例对象上的 props
-      component: null
+      component: null,
+      proxy: null
+      // 用来代理 props attrs data 让用户更方便的使用
     };
-    vnode.component = vnode.type;
+    vnode.component = instance;
     initProps(instance, vnode.props);
+    const publicProperty = {
+      $attrs: (instance2) => instance2.attrs
+      // ...
+    };
+    instance.proxy = new Proxy(instance, {
+      get(target, key, receiver) {
+        const { data: data2, props } = target;
+        if (data2 && hasOwn(data2, key)) {
+          return data2[key];
+        }
+        if (props && hasOwn(props, key)) {
+          return props[key];
+        }
+        const getter = publicProperty[key];
+        if (getter) {
+          return getter(target);
+        }
+      },
+      set(target, key, newValue, receiver) {
+        const { data: data2, props } = target;
+        if (data2 && hasOwn(data2, key)) {
+          data2[key] = newValue;
+        }
+        if (props && hasOwn(props, key)) {
+          console.warn(`props.${key.toString()} is readonly`);
+          return false;
+        }
+        return true;
+      }
+    });
     const componentUpdateFn = () => {
-      const subTree = render3.call(state, state);
+      const subTree = render3.call(instance.proxy, instance.proxy);
       if (!instance.isMounted) {
         patch(null, subTree, container, anchor);
         instance.isMounted = true;
