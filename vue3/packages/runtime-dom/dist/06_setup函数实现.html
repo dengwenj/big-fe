@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module">
+    // import { h } from '../../../node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js'
+
+    import { createRenderer, render, h, createVnode, Text, Fragment, ref } from './runtime-dom.js'
+
+    const VueComponent = {
+      props: {
+        name: String
+      },
+      // setup 函数，每个组件只会执行一次，setup 可以返回 render 函数，也可以返回状态对象
+      setup(props, ctx) {
+        const a = ref("你好")
+        setTimeout(() => {
+          a.value = "世界"
+        }, 1000);
+        // return {
+        //   a
+        // }
+
+        // 这个就是 render 函数，优先级比配置项中的高
+        return () => {
+          return h('h1', a.value)
+        }
+      },
+      render(proxy) {
+        return h('div', proxy.a)
+      }
+    }
+
+    render(h(VueComponent, { a: 1, b: 2, name: '朴睦', age: 25 }), app)
+  </script>
+</body>
+
+</html>

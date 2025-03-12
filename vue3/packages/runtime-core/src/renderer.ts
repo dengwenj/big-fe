@@ -307,7 +307,6 @@ export function createRenderer(renderOptions) {
         if (next) {
           updateComponentPreRender(instance, next)
         }
-        
         subTree = render.call(instance.proxy, instance.proxy)
         // 基于状态的组件更新 -> 就是组件对象里面的状态更新
         patch(instance.subTree, subTree, container, anchor)
@@ -358,6 +357,8 @@ export function createRenderer(renderOptions) {
         return true
       }
     }
+
+    return false
   }
 
   const updateProps = (instance, preProps, nextProps) => {
@@ -392,14 +393,14 @@ export function createRenderer(renderOptions) {
     }
 
     // 属性是否更新
-    return hasPropsChange(n1, n2)
+    return hasPropsChange(preProps, nextProps)
   }
 
   const updateComponent = (n1, n2) => {
     // 获取到组件的实例
     const instance = (n2.component = n1.component)
 
-    // 组件是否要更新
+    // 属性或插槽是否要更新
     if (shouldComponentUpdate(n1, n2)) {
       // 标记下，调用 update 时，有 next 说明是属性或者插槽更新
       instance.next = n2

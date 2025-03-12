@@ -274,3 +274,8 @@ export function trigger(target: object, key: any, newValue: any, oldValue: any) 
   }
 }
 ```
+
+### vue3 初始化组件
+* 1、先创建组件实例
+* 2、给实例的属性赋值
+* 3、创建一个 effect
