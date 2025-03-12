@@ -285,10 +285,27 @@ export function createRenderer(renderOptions) {
     }
   }
 
-  // 没有以前的 vnode
-  const mountComponent = (n2, container, anchor) => {
+  const initProps = (instance, rawProps) => {
+    const props = {}
+    const attrs = {}
+    const propsOptions = instance.propsOptions
+    for (const key in rawProps) {
+      const value = rawProps[key]
+      if (key in propsOptions) {
+        props[key] = value
+      } else {
+        attrs[key] = value
+      }
+    }
+    instance.props = reactive(props) // vue3 里面这个没有用深度代理
+    instance.attrs = attrs
+    console.log(instance, 'instance')
+  }
+
+  // 初始化组件
+  const mountComponent = (vnode, container, anchor) => {
     // 类型是个组件，组件是个对象
-    const { data = () => {}, render } = n2.type
+    const { data = () => {}, render, props: propsOptions = {} } = vnode.type
 
     // 状态，组件可以基于自己的状态重新渲染 effect
     const state = reactive(data())
@@ -297,10 +314,21 @@ export function createRenderer(renderOptions) {
     const instance = {
       data: state,
       isMounted: false, // 是否挂载完成
-      vnode: n2, // 组件的虚拟节点
+      vnode, // 组件的虚拟节点
       update: null, // 组件的更新函数
       subTree: null, // 组件 render 返回的虚拟节点
+      propsOptions, // 组件实例对象上的 props,
+      attrs: {}, // 所有属性 - propsOptions = attrs
+      props: {}, // 响应式的，组件实例对象上的 props
+      component: null
     }
+    vnode.component = vnode.type
+
+    // 元素更新 n2.el = n1.el
+    // 组件更新 n2.component.subTree.el = n1.component.subTree.el
+
+    // 初始化属性
+    initProps(instance, vnode.props)
 
     const componentUpdateFn = () => {
       const subTree = render.call(state, state)

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module">
+    // import { h } from '../../../node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js'
+
+    import { createRenderer, render, h, createVnode, Text, Fragment } from './runtime-dom.js'
+    
+    // vue 组件，就是一个对象
+    // 属性 attrs(非响应式的) + props(响应式的)
+    // 所有属性 - propsOptions = attrs
+    const VueComponent = {
+      props: {
+        name: String,
+        age: Number
+      },
+      render(proxy) {
+        setTimeout(() => {
+          // this.age++
+          // this.age++
+        }, 1000);
+        return h(Fragment, [
+          h(Text, '姓名:'),
+          h('div', '年龄：')
+        ])
+      }
+    }
+    // 组件两个虚拟节点组成 h(VueComponent) = vnode 产生的是组件的虚拟节点
+    // VueComponent.render 函数返回的虚拟节点，这个虚拟节点才是最终渲染的内容 = subTree
+    render(h(VueComponent, { a: 1, b: 2, name: '朴睦', age: 25 }), app)
+  </script>
+</body>
+
+</html>
