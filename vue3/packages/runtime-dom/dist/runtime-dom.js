@@ -514,7 +514,7 @@ function createComponentInstance(vnode) {
 var initProps = (instance, rawProps) => {
   const props = {};
   const attrs = {};
-  const propsOptions = instance.propsOptions;
+  const propsOptions = instance.propsOptions || {};
   for (const key in rawProps) {
     const value = rawProps[key];
     if (key in propsOptions) {
@@ -562,10 +562,12 @@ function setupComponent(instance) {
   instance.proxy = new Proxy(instance, handler);
   const { type } = instance.vnode;
   const { data, render: render2 } = type;
-  if (!isFunction(data)) {
-    return console.warn("data must a function");
+  if (data !== void 0 && !isFunction(data)) {
+    console.warn("data must a function");
   }
-  instance.data = reactive(data.call(instance.proxy));
+  if (isFunction(data)) {
+    instance.data = reactive(data.call(instance.proxy));
+  }
   instance.render = render2;
 }
 
@@ -786,10 +788,38 @@ function createRenderer(renderOptions2) {
     setupComponent(instance);
     setupRenderEffect(instance, container, anchor);
   };
+  const hasPropsChange = (preProps, nextProps) => {
+    const preKeys = Object.keys(preProps);
+    const nextKeys = Object.keys(nextProps);
+    if (preKeys.length !== nextKeys.length) {
+      return true;
+    }
+    for (const key of nextKeys) {
+      if (nextProps[key] !== preProps[key]) {
+        return true;
+      }
+    }
+  };
+  const updateComponent = (n1, n2) => {
+    const instance = n2.component = n1.component;
+    const { props: preProps } = n1;
+    const { props: nextProps } = n2;
+    if (hasPropsChange(preProps, nextProps)) {
+      for (const key in nextProps) {
+        instance.props[key] = nextProps[key];
+      }
+      for (const key in preProps) {
+        if (!(key in nextProps)) {
+          delete instance.props[key];
+        }
+      }
+    }
+  };
   const processComponent = (n1, n2, container, anchor) => {
     if (n1 === null) {
       mountComponent(n2, container, anchor);
     } else {
+      updateComponent(n1, n2);
     }
   };
   const patch = (n1, n2, container, anchor = null) => {

@@ -27,7 +27,7 @@ export function createComponentInstance(vnode) {
 const initProps = (instance, rawProps) => {
   const props = {}
   const attrs = {}
-  const propsOptions = instance.propsOptions
+  const propsOptions = instance.propsOptions || {}
   for (const key in rawProps) {
     const value = rawProps[key]
     if (key in propsOptions) {
@@ -96,12 +96,14 @@ export function setupComponent(instance) {
 
   const { type } = instance.vnode // instance.vnode 组件虚拟dom
   const { data, render } = type // 组件实例
-  if (!isFunction(data)) {
-    return console.warn('data must a function')
+  if (data !== undefined && !isFunction(data)) {
+    console.warn('data must a function')
   }
-  // 状态，组件可以基于自己的状态重新渲染 effect
-  // data 中也可以访问 props
-  instance.data = reactive(data.call(instance.proxy))
+  if (isFunction(data)) {
+    // 状态，组件可以基于自己的状态重新渲染 effect
+    // data 中也可以访问 props
+    instance.data = reactive(data.call(instance.proxy))
+  }
 
   instance.render = render
 }

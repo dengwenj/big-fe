@@ -330,13 +330,57 @@ export function createRenderer(renderOptions) {
     setupRenderEffect(instance, container, anchor)
   }
 
+  const hasPropsChange = (preProps, nextProps) => {
+    const preKeys = Object.keys(preProps)
+    const nextKeys = Object.keys(nextProps)
+
+    // 长度不一样，说明 props 改变了
+    if (preKeys.length !== nextKeys.length) {
+      return true
+    }
+
+    // 看新的 props 的值是否和老的 props 的值一样
+    for (const key of nextKeys) {
+      if (nextProps[key] !== preProps[key]) {
+        return true
+      }
+    }
+  }
+
+  const updateComponent = (n1, n2) => {
+    // 获取到子组件的实例
+    const instance = (n2.component = n1.component)
+    // 组件属性是否变化
+    const { props: preProps } = n1
+    const { props: nextProps } = n2
+
+    // 说明 props 修改过
+    if (hasPropsChange(preProps, nextProps)) {
+      // 用最新的 props
+      for (const key in nextProps) {
+        instance.props[key] = nextProps[key] 
+      }
+
+      // 把多余的 props 删除掉。即新的上面没有 老的上面有，就删除
+      for (const key in preProps) {
+        if (!(key in nextProps)) {
+          delete instance.props[key]
+        }
+      }
+    }
+  }
+
   // vue 组件的渲染
   const processComponent = (n1, n2, container, anchor) => {
+    // n1, n2 是组件虚拟dom，它上面 type 是组件实例(对象)
     if (n1 === null) {
       // 组件首次加载
       mountComponent(n2, container, anchor)
     } else {
+      // 进这里有一个前提：就是有子组件
+      // 组件更新有三种方式（状态，属性，插槽）
       // 组件更新
+      updateComponent(n1, n2)
     }
   }
 
