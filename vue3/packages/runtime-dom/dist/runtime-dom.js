@@ -655,7 +655,10 @@ function createComponentInstance(vnode) {
     // 用来代理 props attrs data 让用户更方便的使用
     render: null,
     // 组件实例的 render
-    setupState: {}
+    setupState: {},
+    // setup 函数返回的数据
+    exposed: null
+    // 暴露
   };
   return instance;
 }
@@ -677,7 +680,6 @@ var initProps = (instance, rawProps) => {
 var publicProperty = {
   $attrs: (instance) => instance.attrs,
   $slots: (instance) => instance.slots
-  // ...
 };
 var handler = {
   get(target, key, receiver) {
@@ -720,16 +722,22 @@ var initSlots = (instance, slots) => {
   }
 };
 function setupComponent(instance) {
-  const { props, children } = instance.vnode;
+  const { type, props, children } = instance.vnode;
   initProps(instance, props);
   initSlots(instance, children);
   instance.proxy = new Proxy(instance, handler);
-  const { type } = instance.vnode;
   const { data, render: render2, setup } = type;
   if (setup) {
     const setupContext = {
-      slots: instance.slots
-      // emit expose attrs
+      slots: instance.slots,
+      attrs: instance.attrs,
+      expose(value) {
+        instance.exposed = value;
+      },
+      emit(event, ...payload) {
+        const eventName = `on${event[0].toUpperCase()}${event.slice(1)}`;
+        props[eventName]?.(...payload);
+      }
     };
     const res = setup(instance.props, setupContext);
     if (isFunction(res)) {
@@ -1055,6 +1063,8 @@ function createRenderer(renderOptions2) {
   const unmount = (vnode) => {
     if (vnode.type === Fragment) {
       unmountChildren(vnode.children);
+    } else if (vnode.shapeFlag & 6 /* COMPONENT */) {
+      unmount(vnode.component.subTree);
     } else {
       hostRemove(vnode.el);
     }

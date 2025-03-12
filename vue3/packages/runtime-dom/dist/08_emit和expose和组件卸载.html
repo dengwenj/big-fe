@@ -16,9 +16,9 @@
 
     const SonComponent = {
       setup(props, ctx) {
-        const { slots } = ctx
+        const { slots, emit } = ctx
         return () => {
-          return h(Fragment, [slots.pumu?.(), slots.ww?.("你好")])
+          return h('button', { onClick() { emit('myEvent', "点我了") } }, "点我")
         }
       }
     }
@@ -27,15 +27,16 @@
       setup(props, ctx) {
         return () => {
           // 组件的儿子就是插槽
-          return h(SonComponent, null, {
-            pumu: () => h('h1', '插槽1'), // 插槽
-            ww: (s) => h('h1', '插槽2' + s), // 插槽
-          })
+          return h(SonComponent, { onMyEvent: (v) => { console.log("数据：" + v) } })
         }
       },
     }
 
     render(h(VueComponent), app)
+
+    setTimeout(() => {
+      // render(null, app)
+    }, 1000);
   </script>
 </body>
 

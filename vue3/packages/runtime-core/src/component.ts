@@ -20,7 +20,8 @@ export function createComponentInstance(vnode) {
     component: null,
     proxy: null, // 用来代理 props attrs data 让用户更方便的使用
     render: null, // 组件实例的 render
-    setupState: {}
+    setupState: {}, // setup 函数返回的数据
+    exposed: null // 暴露
   }
 
   return instance
@@ -45,7 +46,6 @@ const initProps = (instance, rawProps) => {
 const publicProperty = {
   $attrs: (instance) => instance.attrs,
   $slots: (instance) => instance.slots
-  // ...
 }
 const handler = {
   get(target, key, receiver) {
@@ -113,7 +113,8 @@ const initSlots = (instance, slots) => {
  * 组件的儿子就是插槽
  */
 export function setupComponent(instance) {
-  const { props, children } = instance.vnode
+  const { type, props, children } = instance.vnode // 组件的虚拟dom
+
   // 初始化属性
   initProps(instance, props)
 
@@ -123,15 +124,22 @@ export function setupComponent(instance) {
   // 组件的代理对象
   instance.proxy = new Proxy(instance, handler)
 
-  const { type } = instance.vnode // instance.vnode 组件虚拟dom
-  const { data, render, setup } = type // 组件实例
+  const { data, render, setup } = type // 组件对象(h函数传递的第一个参数是对象)
 
   if (setup) {
     // setup 中的上下文
     const setupContext = {
       slots: instance.slots,
-      // emit expose attrs
+      attrs: instance.attrs,
+      expose(value: Record<string, any>) {
+        instance.exposed = value
+      },
+      emit(event: string, ...payload: any[]) {
+        const eventName = `on${event[0].toUpperCase()}${event.slice(1)}` // onMyEvent
+        props[eventName]?.(...payload)
+      }
     }
+
     const res = setup(instance.props, setupContext)
     // 根据 setup 不同的返回值做不同处理
     if (isFunction(res)) {
