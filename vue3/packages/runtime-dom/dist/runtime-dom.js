@@ -127,6 +127,8 @@ function createVnode(type, props, children) {
   };
   if (Array.isArray(children)) {
     vnode.shapeFlag |= 16 /* ARRAY_CHILDREN */;
+  } else if (isObject(children)) {
+    vnode.shapeFlag |= 32 /* SLOTS_CHILDREN */;
   } else {
     vnode.shapeFlag |= 8 /* TEXT_CHILDREN */;
   }
@@ -646,6 +648,8 @@ function createComponentInstance(vnode) {
     // 所有属性 - propsOptions = attrs
     props: {},
     // 响应式的，组件实例对象上的 props
+    slots: {},
+    // 插槽
     component: null,
     proxy: null,
     // 用来代理 props attrs data 让用户更方便的使用
@@ -671,7 +675,8 @@ var initProps = (instance, rawProps) => {
   instance.attrs = attrs;
 };
 var publicProperty = {
-  $attrs: (instance) => instance.attrs
+  $attrs: (instance) => instance.attrs,
+  $slots: (instance) => instance.slots
   // ...
 };
 var handler = {
@@ -707,15 +712,24 @@ var handler = {
     return true;
   }
 };
+var initSlots = (instance, slots) => {
+  if (instance.vnode.shapeFlag & 32 /* SLOTS_CHILDREN */) {
+    instance.slots = slots;
+  } else {
+    instance.slots = {};
+  }
+};
 function setupComponent(instance) {
-  const { props } = instance.vnode;
+  const { props, children } = instance.vnode;
   initProps(instance, props);
+  initSlots(instance, children);
   instance.proxy = new Proxy(instance, handler);
   const { type } = instance.vnode;
   const { data, render: render2, setup } = type;
   if (setup) {
     const setupContext = {
-      // ...
+      slots: instance.slots
+      // emit expose attrs
     };
     const res = setup(instance.props, setupContext);
     if (isFunction(res)) {

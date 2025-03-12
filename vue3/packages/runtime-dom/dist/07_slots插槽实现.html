@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module">
+    // import { h } from '../../../node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js'
+
+    import { createRenderer, render, h, createVnode, Text, Fragment, ref } from './runtime-dom.js'
+
+    const SonComponent = {
+      setup(props, ctx) {
+        return () => {
+          const { slots } = ctx
+          return h(Fragment, [slots.pumu?.(), slots.ww?.("你好")])
+        }
+      }
+    }
+
+    const VueComponent = {
+      setup(props, ctx) {
+        return () => {
+          // 组件的儿子就是插槽
+          return h(SonComponent, null, {
+            pumu: () => h('h1', '插槽1'), // 插槽
+            ww: (s) => h('h1', '插槽2' + s), // 插槽
+          })
+        }
+      },
+    }
+
+    render(h(VueComponent), app)
+  </script>
+</body>
+
+</html>

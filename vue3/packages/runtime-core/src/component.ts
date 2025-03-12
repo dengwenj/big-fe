@@ -1,5 +1,5 @@
 import { proxyRefs, reactive } from "@vue/reactivity"
-import { hasOwn, isFunction } from "@vue/shared"
+import { hasOwn, isFunction, ShapeFlags } from "@vue/shared"
 
 /**
  * 创建组件实例
@@ -16,6 +16,7 @@ export function createComponentInstance(vnode) {
     propsOptions: vnode.type.props, // 组件实例对象上的 props,
     attrs: {}, // 所有属性 - propsOptions = attrs
     props: {}, // 响应式的，组件实例对象上的 props
+    slots: {}, // 插槽
     component: null,
     proxy: null, // 用来代理 props attrs data 让用户更方便的使用
     render: null, // 组件实例的 render
@@ -42,7 +43,8 @@ const initProps = (instance, rawProps) => {
 }
 
 const publicProperty = {
-  $attrs: (instance) => instance.attrs
+  $attrs: (instance) => instance.attrs,
+  $slots: (instance) => instance.slots
   // ...
 }
 const handler = {
@@ -98,13 +100,25 @@ const handler = {
   },
 }
 
+const initSlots = (instance, slots) => {
+  if (instance.vnode.shapeFlag & ShapeFlags.SLOTS_CHILDREN) {
+    instance.slots = slots 
+  } else {
+    instance.slots = {}
+  }
+}
+
 /**
  * 给实例的属性赋值
+ * 组件的儿子就是插槽
  */
 export function setupComponent(instance) {
-  const { props } = instance.vnode
+  const { props, children } = instance.vnode
   // 初始化属性
   initProps(instance, props)
+
+  // 初始化插槽
+  initSlots(instance, children)
 
   // 组件的代理对象
   instance.proxy = new Proxy(instance, handler)
@@ -113,9 +127,10 @@ export function setupComponent(instance) {
   const { data, render, setup } = type // 组件实例
 
   if (setup) {
-    // setup 中的上下文 TODO
+    // setup 中的上下文
     const setupContext = {
-      // ...
+      slots: instance.slots,
+      // emit expose attrs
     }
     const res = setup(instance.props, setupContext)
     // 根据 setup 不同的返回值做不同处理

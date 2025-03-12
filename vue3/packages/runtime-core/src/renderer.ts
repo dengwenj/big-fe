@@ -333,7 +333,7 @@ export function createRenderer(renderOptions) {
     vnode.component = instance
 
     // 元素更新 n2.el = n1.el
-    // 组件更新 n2.component.subTree.el = n1.component.subTree.el
+    // 组件更新 n2.component.subTree.el = n1.component.subTree.el, subTree 就是 render 函数的返回值虚拟dom
 
     // 2、给实例的属性赋值
     setupComponent(instance)
