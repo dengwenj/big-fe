@@ -2,6 +2,7 @@ import { ShapeFlags } from "@vue/shared"
 import { Fragment, isSameVnode, Text } from './createVnode'
 import getSequence from "./seq"
 import { reactive, ReactiveEffect } from "@vue/reactivity"
+import { queueJob } from "./schedulder"
 
 /**
  * 调用 h 函数 根据传入的参数 会创建出虚拟 dom(js 对象)
@@ -316,7 +317,8 @@ export function createRenderer(renderOptions) {
     }
 
     const effect = new ReactiveEffect(componentUpdateFn, () => {
-      update()
+      // 异步更新组件
+      queueJob(update)
     })
 
     const update = () => {
@@ -329,9 +331,10 @@ export function createRenderer(renderOptions) {
   // vue 组件的渲染
   const processComponent = (n1, n2, container, anchor) => {
     if (n1 === null) {
+      // 组件首次加载
       mountComponent(n2, container, anchor)
     } else {
-      
+      // 组件更新
     }
   }
 

@@ -458,6 +458,28 @@ function triggerComputedRef(target, key, newValue, oldValue) {
   trigger(target, key, newValue, oldValue);
 }
 
+// packages/runtime-core/src/schedulder.ts
+var queue = [];
+var isFlushing = false;
+var resolvePromise = Promise.resolve();
+function queueJob(job) {
+  if (!queue.includes(job)) {
+    queue.push(job);
+  }
+  if (!isFlushing) {
+    isFlushing = true;
+    resolvePromise.then(() => {
+      isFlushing = false;
+      const copyQueue = queue.slice(0);
+      queue.length = 0;
+      for (const job2 of copyQueue) {
+        job2();
+      }
+      copyQueue.length = 0;
+    });
+  }
+}
+
 // packages/runtime-core/src/renderer.ts
 function createRenderer(renderOptions2) {
   const {
@@ -674,7 +696,7 @@ function createRenderer(renderOptions2) {
       instance.subTree = subTree;
     };
     const effect = new ReactiveEffect(componentUpdateFn, () => {
-      update();
+      queueJob(update);
     });
     const update = () => {
       effect.run();

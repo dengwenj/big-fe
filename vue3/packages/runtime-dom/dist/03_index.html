@@ -23,9 +23,10 @@
         }
       },
       render(proxy) {
-        // setTimeout(() => {
-        //   this.age++
-        // }, 1000);
+        setTimeout(() => {
+          this.age++
+          this.age++
+        }, 1000);
         return h(Fragment, [
           h(Text, '姓名:' + this.name),
           h('div', '年龄：' + this.age)
