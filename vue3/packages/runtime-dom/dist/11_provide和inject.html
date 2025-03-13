@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import { 
+      createRenderer, 
+      render, 
+      h, 
+      createVnode, 
+      Text, 
+      Fragment, 
+      ref,
+      onBeforeMount,
+      onMounted,
+      onBeforeUpdate,
+      onUpdated,
+      getCurrentInstance,
+      provide,
+      inject
+    } from './runtime-dom.js'
+
+    // provide 在父组件定义好后，可以在后代组件中拿到，用 inject 拿
+    // provide 的原理就是沿着原型链取
+    const p3 = {
+      name: '3',
+      setup() {
+        const name = inject('name')
+        const age = inject('age', 25)
+
+        return () => {
+          return h('h1', [name.value, age])
+        }
+      }
+    }
+
+    const SonComponent = {
+      name: '2',
+      setup(props, ctx) {
+        provide('age', 23)
+        return () => {
+          return h(p3)
+        }
+      }
+    }
+
+    const VueComponent = {
+      name: '1',
+      setup(props, ctx) {
+        const name = ref('朴睦')
+
+        provide('name', name)
+
+        setTimeout(() => {
+          name.value = "dwj"
+        }, 1000)
+
+        return () => {
+          return h(SonComponent)
+        }
+      },
+    }
+
+    render(h(VueComponent), app)
+  </script>
+</body>
+
+</html>

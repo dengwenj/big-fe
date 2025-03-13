@@ -6,7 +6,7 @@ import { hasOwn, isFunction, ShapeFlags } from "@vue/shared"
  * @param vnode type类似是组件的虚拟dom
  * @returns 组件实例(对象)
  */
-export function createComponentInstance(vnode) {
+export function createComponentInstance(vnode, parent) {
   const instance = {
     data: null,
     isMounted: false, // 是否挂载完成
@@ -21,7 +21,9 @@ export function createComponentInstance(vnode) {
     proxy: null, // 用来代理 props attrs data 让用户更方便的使用
     render: null, // 组件实例的 render
     setupState: {}, // setup 函数返回的数据
-    exposed: null // 暴露
+    exposed: null, // 暴露
+    parent, // 父组件
+    provides: parent ? parent.provides : Object.create(null)
   }
 
   return instance

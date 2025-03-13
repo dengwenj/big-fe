@@ -1,5 +1,5 @@
 import { ShapeFlags } from "@vue/shared"
-import { Fragment, isSameVnode, Text } from './createVnode'
+import { createVnode, Fragment, isSameVnode, Text } from './createVnode'
 import getSequence from "./seq"
 import { isRef, ReactiveEffect } from "@vue/reactivity"
 import { queueJob } from "./schedulder"
@@ -25,7 +25,25 @@ export function createRenderer(renderOptions) {
     patchProp: hostPatchProp
   } = renderOptions
 
+  const normalize = (children) => {
+    if (Array.isArray(children)) {
+      for (let i = 0; i < children.length; i++) {
+        if (
+          typeof children[i] === "string" ||
+          typeof children[i] === "number"
+        ) {
+          children[i] = createVnode(Text, null, String(children[i]))
+        }
+      }
+    }
+
+    return children
+  }
+
   const mountChildren = (ele, children) => {
+    // 转换下
+    normalize(children)
+
     for (const item of children) {
       patch(null, item, ele)
     }
@@ -220,7 +238,7 @@ export function createRenderer(renderOptions) {
   // 6、老的是文本，新的是数组
   const patchChildren = (n1, n2, el) => {
     const c1 = n1.children
-    const c2 = n2.children
+    const c2 = normalize(n2.children)
     const preShapeFlag = n1.shapeFlag
     const shapeFlag = n2.shapeFlag
 
@@ -298,6 +316,7 @@ export function createRenderer(renderOptions) {
     if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
       return render.call(proxy, proxy)
     } else {
+      // 函数式组件
       return vnode.type(attrs)
     }
   }
@@ -314,7 +333,7 @@ export function createRenderer(renderOptions) {
         }
 
         subTree = renderComponent(instance)
-        patch(null, subTree, container, anchor)
+        patch(null, subTree, container, anchor, instance)
         instance.isMounted = true
 
         // 调用 Mounted 生命周期
@@ -334,7 +353,7 @@ export function createRenderer(renderOptions) {
 
         subTree = renderComponent(instance)
         // 基于状态的组件更新 -> 就是组件对象里面的状态更新
-        patch(instance.subTree, subTree, container, anchor)
+        patch(instance.subTree, subTree, container, anchor, instance)
 
         // 调用 updated 生命周期
         if (u) {
@@ -357,9 +376,9 @@ export function createRenderer(renderOptions) {
     instance.update = update
   }
   // 初始化组件
-  const mountComponent = (vnode, container, anchor) => {
+  const mountComponent = (vnode, container, anchor, parentComponent) => {
     // 1、先创建组件实例
-    const instance = createComponentInstance(vnode)
+    const instance = createComponentInstance(vnode, parentComponent)
     vnode.component = instance
 
     // 元素更新 n2.el = n1.el
@@ -439,11 +458,11 @@ export function createRenderer(renderOptions) {
   }
 
   // vue 组件的渲染
-  const processComponent = (n1, n2, container, anchor) => {
+  const processComponent = (n1, n2, container, anchor, parentComponent) => {
     // n1, n2 是组件虚拟dom，它上面 type 是组件实例(对象)
     if (n1 === null) {
       // 组件首次加载
-      mountComponent(n2, container, anchor)
+      mountComponent(n2, container, anchor, parentComponent)
     } else {
       // 进这里有一个前提：就是有子组件
       // 组件更新有三种方式（状态，属性，插槽）
@@ -453,7 +472,7 @@ export function createRenderer(renderOptions) {
   }
 
   // 渲染和更新都走这里
-  const patch = (n1, n2, container, anchor = null) => {
+  const patch = (n1, n2, container, anchor = null, parentComponent = null) => {
     // 说明是同一个 vnode
     if (n1 === n2) {
       return
@@ -480,7 +499,7 @@ export function createRenderer(renderOptions) {
     
       default:
         if (shapeFlag & ShapeFlags.COMPONENT) {
-          processComponent(n1, n2, container, anchor)
+          processComponent(n1, n2, container, anchor, parentComponent)
         } else {
           processElement(n1, n2, container, anchor)
         }

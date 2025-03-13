@@ -632,7 +632,7 @@ function queueJob(job) {
 }
 
 // packages/runtime-core/src/component.ts
-function createComponentInstance(vnode) {
+function createComponentInstance(vnode, parent) {
   const instance = {
     data: null,
     isMounted: false,
@@ -658,8 +658,11 @@ function createComponentInstance(vnode) {
     // 组件实例的 render
     setupState: {},
     // setup 函数返回的数据
-    exposed: null
+    exposed: null,
     // 暴露
+    parent,
+    // 父组件
+    provides: parent ? parent.provides : /* @__PURE__ */ Object.create(null)
   };
   return instance;
 }
@@ -817,7 +820,18 @@ function createRenderer(renderOptions2) {
     nextSibling: hostNextSibling,
     patchProp: hostPatchProp
   } = renderOptions2;
+  const normalize = (children) => {
+    if (Array.isArray(children)) {
+      for (let i = 0; i < children.length; i++) {
+        if (typeof children[i] === "string" || typeof children[i] === "number") {
+          children[i] = createVnode(Text, null, String(children[i]));
+        }
+      }
+    }
+    return children;
+  };
   const mountChildren = (ele, children) => {
+    normalize(children);
     for (const item of children) {
       patch(null, item, ele);
     }
@@ -941,7 +955,7 @@ function createRenderer(renderOptions2) {
   };
   const patchChildren = (n1, n2, el) => {
     const c1 = n1.children;
-    const c2 = n2.children;
+    const c2 = normalize(n2.children);
     const preShapeFlag = n1.shapeFlag;
     const shapeFlag = n2.shapeFlag;
     if (shapeFlag & 8 /* TEXT_CHILDREN */) {
@@ -1016,7 +1030,7 @@ function createRenderer(renderOptions2) {
           invokeLifeCycleHooks(bm);
         }
         subTree = renderComponent(instance);
-        patch(null, subTree, container, anchor);
+        patch(null, subTree, container, anchor, instance);
         instance.isMounted = true;
         if (m) {
           invokeLifeCycleHooks(m);
@@ -1029,7 +1043,7 @@ function createRenderer(renderOptions2) {
           invokeLifeCycleHooks(bu);
         }
         subTree = renderComponent(instance);
-        patch(instance.subTree, subTree, container, anchor);
+        patch(instance.subTree, subTree, container, anchor, instance);
         if (u) {
           invokeLifeCycleHooks(u);
         }
@@ -1045,8 +1059,8 @@ function createRenderer(renderOptions2) {
     update();
     instance.update = update;
   }
-  const mountComponent = (vnode, container, anchor) => {
-    const instance = createComponentInstance(vnode);
+  const mountComponent = (vnode, container, anchor, parentComponent) => {
+    const instance = createComponentInstance(vnode, parentComponent);
     vnode.component = instance;
     setupComponent(instance);
     setupRenderEffect(instance, container, anchor);
@@ -1094,14 +1108,14 @@ function createRenderer(renderOptions2) {
       instance.update();
     }
   };
-  const processComponent = (n1, n2, container, anchor) => {
+  const processComponent = (n1, n2, container, anchor, parentComponent) => {
     if (n1 === null) {
-      mountComponent(n2, container, anchor);
+      mountComponent(n2, container, anchor, parentComponent);
     } else {
       updateComponent(n1, n2);
     }
   };
-  const patch = (n1, n2, container, anchor = null) => {
+  const patch = (n1, n2, container, anchor = null, parentComponent = null) => {
     if (n1 === n2) {
       return;
     }
@@ -1120,7 +1134,7 @@ function createRenderer(renderOptions2) {
         break;
       default:
         if (shapeFlag & 6 /* COMPONENT */) {
-          processComponent(n1, n2, container, anchor);
+          processComponent(n1, n2, container, anchor, parentComponent);
         } else {
           processElement(n1, n2, container, anchor);
         }
@@ -1165,6 +1179,30 @@ function createRenderer(renderOptions2) {
   };
 }
 
+// packages/runtime-core/src/apiProvide.ts
+function provide(key, value) {
+  if (!currentInstance) {
+    return;
+  }
+  const parentProvide = currentInstance.parent?.provides;
+  let provides = currentInstance.provides;
+  if (parentProvide === provides) {
+    provides = currentInstance.provides = Object.create(parentProvide);
+  }
+  provides[key] = value;
+}
+function inject(key, defaultVal) {
+  if (!currentInstance) {
+    return;
+  }
+  const provides = currentInstance.parent?.provides;
+  if (provides?.[key]) {
+    return currentInstance.provides[key];
+  } else {
+    return defaultVal;
+  }
+}
+
 // packages/runtime-dom/src/index.ts
 var renderOptions = {
   ...nodeOps,
@@ -1187,6 +1225,7 @@ export {
   effect,
   getCurrentInstance,
   h,
+  inject,
   invokeLifeCycleHooks,
   isReactive,
   isRef,
@@ -1196,6 +1235,7 @@ export {
   onBeforeUpdate,
   onMounted,
   onUpdated,
+  provide,
   proxyRefs,
   reactive,
   ref,
