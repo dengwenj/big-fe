@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import { 
+      createRenderer, 
+      render, 
+      h, 
+      createVnode, 
+      Text, 
+      Fragment, 
+      ref,
+      onBeforeMount,
+      onMounted,
+      onBeforeUpdate,
+      onUpdated,
+      getCurrentInstance
+    } from './runtime-dom.js'
+
+    // 生命周期方法本质就是：instance 实例和生命周期钩子关联在一起，在特定的时机去调用对应的钩子即可
+
+    const SonComponent = {
+      props: {
+        val: String
+      },
+      setup(props, ctx) {
+        console.log(getCurrentInstance(), 'children')
+        onBeforeMount(() => {
+          console.log("children onBeforeMount")
+        })
+
+        onMounted(() => {
+          console.log('children onMounted');
+        })
+
+        onBeforeUpdate(() => {
+          console.log("children onBeforeUpdate")
+        })
+
+        onUpdated(() => {
+          console.log("children onUpdated")
+        })
+
+        return () => {
+          return h('h1', props.val)
+        }
+      }
+    }
+
+    const VueComponent = {
+      setup(props, ctx) {
+        const a = ref('你好')
+        setTimeout(() => {
+          a.value = "世界"
+        }, 1000);
+
+        console.log(getCurrentInstance(), 'parent')
+
+        onBeforeMount(() => {
+          console.log(getCurrentInstance(), 'onBeforeMount getCurrentInstance()')
+          console.log("parent onBeforeMount")
+        })
+
+        onMounted(() => {
+          console.log('parent onMounted');
+        })
+
+        onBeforeUpdate(() => {
+          console.log("prent onBeforeUpdate")
+        })
+
+        onUpdated(() => {
+          console.log("prent onUpdated")
+        })
+
+        return () => {
+          return h(SonComponent, { val: a.value })
+        }
+      },
+    }
+
+    render(h(VueComponent), app)
+  </script>
+</body>
+
+</html>

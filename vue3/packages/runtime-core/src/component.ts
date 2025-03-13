@@ -140,7 +140,9 @@ export function setupComponent(instance) {
       }
     }
 
+    setCurrentInstance(instance)
     const res = setup(instance.props, setupContext)
+    unsetCurrentInstance()
     // 根据 setup 不同的返回值做不同处理
     if (isFunction(res)) {
       instance.render = res
@@ -162,4 +164,15 @@ export function setupComponent(instance) {
     // 这是配置项中的 render
     instance.render = render
   }
+}
+
+export let currentInstance = null
+export const getCurrentInstance = () => {
+  return currentInstance
+}
+export const setCurrentInstance = (instance) => {
+  currentInstance = instance
+}
+export const unsetCurrentInstance = () => {
+  currentInstance = null
 }

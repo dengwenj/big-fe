@@ -4,6 +4,7 @@ import getSequence from "./seq"
 import { ReactiveEffect } from "@vue/reactivity"
 import { queueJob } from "./schedulder"
 import { createComponentInstance, setupComponent } from "./component"
+import { invokeLifeCycleHooks } from "./apiLifeCycle"
 
 /**
  * 调用 h 函数 根据传入的参数 会创建出虚拟 dom(js 对象)
@@ -294,22 +295,43 @@ export function createRenderer(renderOptions) {
 
   function setupRenderEffect(instance, container, anchor) {
     const componentUpdateFn = () => {
-      const { render, next } = instance
+      const { render, next, bm, m, bu, u } = instance
 
       let subTree
       // 初始化
       if (!instance.isMounted) {
+        // 调用 beforeMount 生命周期
+        if (bm) {
+          invokeLifeCycleHooks(bm)
+        }
+
         subTree = render.call(instance.proxy, instance.proxy)
         patch(null, subTree, container, anchor)
         instance.isMounted = true
+
+        // 调用 Mounted 生命周期
+        if (m) {
+          invokeLifeCycleHooks(m)
+        }
       } else {
         // 说明是属性或者插槽更新
         if (next) {
           updateComponentPreRender(instance, next)
         }
+
+        // 调用 beforeUpdate 生命周期
+        if (bu) {
+          invokeLifeCycleHooks(bu)
+        }
+
         subTree = render.call(instance.proxy, instance.proxy)
         // 基于状态的组件更新 -> 就是组件对象里面的状态更新
         patch(instance.subTree, subTree, container, anchor)
+
+        // 调用 updated 生命周期
+        if (u) {
+          invokeLifeCycleHooks(u)
+        }
       }
       // 保存下组件 render 返回的虚拟节点
       instance.subTree = subTree

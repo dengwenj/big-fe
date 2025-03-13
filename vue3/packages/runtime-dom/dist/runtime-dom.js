@@ -739,7 +739,9 @@ function setupComponent(instance) {
         props[eventName]?.(...payload);
       }
     };
+    setCurrentInstance(instance);
     const res = setup(instance.props, setupContext);
+    unsetCurrentInstance();
     if (isFunction(res)) {
       instance.render = res;
     } else {
@@ -754,6 +756,50 @@ function setupComponent(instance) {
   }
   if (!instance.render) {
     instance.render = render2;
+  }
+}
+var currentInstance = null;
+var getCurrentInstance = () => {
+  return currentInstance;
+};
+var setCurrentInstance = (instance) => {
+  currentInstance = instance;
+};
+var unsetCurrentInstance = () => {
+  currentInstance = null;
+};
+
+// packages/runtime-core/src/apiLifeCycle.ts
+var LifeCycle = /* @__PURE__ */ ((LifeCycle2) => {
+  LifeCycle2["BEFORE_MOUNT"] = "bm";
+  LifeCycle2["MOUNTED"] = "m";
+  LifeCycle2["BEFORE_UPDATE"] = "bu";
+  LifeCycle2["UPDATED"] = "u";
+  return LifeCycle2;
+})(LifeCycle || {});
+function createHook(type) {
+  return (hook) => {
+    let target = currentInstance;
+    if (target) {
+      if (!target[type]) {
+        target[type] = [];
+      }
+      const wrapHook = () => {
+        setCurrentInstance(target);
+        hook();
+        unsetCurrentInstance();
+      };
+      target[type].push(wrapHook);
+    }
+  };
+}
+var onBeforeMount = createHook("bm" /* BEFORE_MOUNT */);
+var onMounted = createHook("m" /* MOUNTED */);
+var onBeforeUpdate = createHook("bu" /* BEFORE_UPDATE */);
+var onUpdated = createHook("u" /* UPDATED */);
+function invokeLifeCycleHooks(hooks) {
+  for (const hook of hooks) {
+    hook();
   }
 }
 
@@ -954,18 +1000,30 @@ function createRenderer(renderOptions2) {
   };
   function setupRenderEffect(instance, container, anchor) {
     const componentUpdateFn = () => {
-      const { render: render3, next } = instance;
+      const { render: render3, next, bm, m, bu, u } = instance;
       let subTree;
       if (!instance.isMounted) {
+        if (bm) {
+          invokeLifeCycleHooks(bm);
+        }
         subTree = render3.call(instance.proxy, instance.proxy);
         patch(null, subTree, container, anchor);
         instance.isMounted = true;
+        if (m) {
+          invokeLifeCycleHooks(m);
+        }
       } else {
         if (next) {
           updateComponentPreRender(instance, next);
         }
+        if (bu) {
+          invokeLifeCycleHooks(bu);
+        }
         subTree = render3.call(instance.proxy, instance.proxy);
         patch(instance.subTree, subTree, container, anchor);
+        if (u) {
+          invokeLifeCycleHooks(u);
+        }
       }
       instance.subTree = subTree;
     };
@@ -1094,28 +1152,40 @@ var render = (vNode, container) => {
 };
 export {
   Fragment,
+  LifeCycle,
   ReactiveEffect,
   Text,
   activeEffect,
   computed,
+  createComponentInstance,
   createRenderer,
   createVnode,
+  currentInstance,
   effect,
+  getCurrentInstance,
   h,
+  invokeLifeCycleHooks,
   isReactive,
   isRef,
   isSameVnode,
   isVnode,
+  onBeforeMount,
+  onBeforeUpdate,
+  onMounted,
+  onUpdated,
   proxyRefs,
   reactive,
   ref,
   render,
+  setCurrentInstance,
+  setupComponent,
   targetEffects,
   toReactive,
   toRef,
   toRefs,
   trackComputedRef,
   triggerComputedRef,
+  unsetCurrentInstance,
   watch,
   watchEffect
 };

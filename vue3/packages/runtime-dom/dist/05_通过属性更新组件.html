@@ -32,7 +32,7 @@
         }
       },
       render(proxy) {
-        return h(Fragment, [
+        return h('div', [
           h('button', { onClick: () => proxy.flag = !proxy.flag }, '点我'),
           h(SonComponent, { address: this.flag ? '上海' : '重庆' })
         ])
