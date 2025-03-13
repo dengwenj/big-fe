@@ -293,9 +293,17 @@ export function createRenderer(renderOptions) {
     updateProps(instance, instance.props, next.props)
   }
 
+  function renderComponent(instance) {
+    const { vnode, render, proxy, attrs } = instance
+    if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+      return render.call(proxy, proxy)
+    } else {
+      return vnode.type(attrs)
+    }
+  }
   function setupRenderEffect(instance, container, anchor) {
     const componentUpdateFn = () => {
-      const { render, next, bm, m, bu, u } = instance
+      const { next, bm, m, bu, u } = instance
 
       let subTree
       // 初始化
@@ -305,7 +313,7 @@ export function createRenderer(renderOptions) {
           invokeLifeCycleHooks(bm)
         }
 
-        subTree = render.call(instance.proxy, instance.proxy)
+        subTree = renderComponent(instance)
         patch(null, subTree, container, anchor)
         instance.isMounted = true
 
@@ -324,7 +332,7 @@ export function createRenderer(renderOptions) {
           invokeLifeCycleHooks(bu)
         }
 
-        subTree = render.call(instance.proxy, instance.proxy)
+        subTree = renderComponent(instance)
         // 基于状态的组件更新 -> 就是组件对象里面的状态更新
         patch(instance.subTree, subTree, container, anchor)
 

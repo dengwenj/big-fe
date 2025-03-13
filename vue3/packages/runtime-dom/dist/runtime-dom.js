@@ -113,7 +113,7 @@ function isSameVnode(n1, n2) {
   return n1.type === n2.type && n1.key === n2.key;
 }
 function createVnode(type, props, children) {
-  const shapeFlag = isString(type) ? 1 /* ELEMENT */ : isObject(type) ? 4 /* STATEFUL_COMPONENT */ : 0;
+  const shapeFlag = isString(type) ? 1 /* ELEMENT */ : isObject(type) ? 4 /* STATEFUL_COMPONENT */ : isFunction(type) ? 2 /* FUNCTIONAL_COMPONENT */ : 0;
   const vnode = {
     __v_isVnode: true,
     type,
@@ -999,15 +999,23 @@ function createRenderer(renderOptions2) {
     instance.vnode = next;
     updateProps(instance, instance.props, next.props);
   };
+  function renderComponent(instance) {
+    const { vnode, render: render3, proxy, attrs } = instance;
+    if (vnode.shapeFlag & 4 /* STATEFUL_COMPONENT */) {
+      return render3.call(proxy, proxy);
+    } else {
+      return vnode.type(attrs);
+    }
+  }
   function setupRenderEffect(instance, container, anchor) {
     const componentUpdateFn = () => {
-      const { render: render3, next, bm, m, bu, u } = instance;
+      const { next, bm, m, bu, u } = instance;
       let subTree;
       if (!instance.isMounted) {
         if (bm) {
           invokeLifeCycleHooks(bm);
         }
-        subTree = render3.call(instance.proxy, instance.proxy);
+        subTree = renderComponent(instance);
         patch(null, subTree, container, anchor);
         instance.isMounted = true;
         if (m) {
@@ -1020,7 +1028,7 @@ function createRenderer(renderOptions2) {
         if (bu) {
           invokeLifeCycleHooks(bu);
         }
-        subTree = render3.call(instance.proxy, instance.proxy);
+        subTree = renderComponent(instance);
         patch(instance.subTree, subTree, container, anchor);
         if (u) {
           invokeLifeCycleHooks(u);
