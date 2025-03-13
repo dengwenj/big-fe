@@ -1,7 +1,7 @@
 import { ShapeFlags } from "@vue/shared"
 import { Fragment, isSameVnode, Text } from './createVnode'
 import getSequence from "./seq"
-import { ReactiveEffect } from "@vue/reactivity"
+import { isRef, ReactiveEffect } from "@vue/reactivity"
 import { queueJob } from "./schedulder"
 import { createComponentInstance, setupComponent } from "./component"
 import { invokeLifeCycleHooks } from "./apiLifeCycle"
@@ -460,7 +460,7 @@ export function createRenderer(renderOptions) {
       container._vnode = n2
     }
 
-    const { type, shapeFlag } = n2
+    const { type, shapeFlag, ref } = n2
     switch (type) {
       case Text:
         processText(n1, n2, container)
@@ -477,6 +477,25 @@ export function createRenderer(renderOptions) {
           processElement(n1, n2, container, anchor)
         }
         break;
+    }
+
+    // 属性上是否有 ref
+    if (ref) {
+      setRef(ref, n2)
+    }
+  }
+
+  // 如果 ref 放到组件上，指代的是组件实例，如果当前组件有 expose，则是 expose，没有则是 proxy
+  // 如果放到 dom 元素上指代的就是 dom 元素
+  const setRef = (ref, n2) => {
+    let val 
+    if (n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+      val = n2.component.exposed || n2.component.proxy
+    } else {
+      val = n2.el
+    }
+    if (isRef(ref)) {
+      ref.value = val
     }
   }
 

@@ -25,7 +25,8 @@ export function createVnode(type, props, children) {
     children,
     shapeFlag,
     el: null, // 虚拟节点对应的真实节点是谁
-    key: props?.key // diff 算法后面需要的 key
+    key: props?.key, // diff 算法后面需要的 key
+    ref: props?.ref
   }
 
   // []
