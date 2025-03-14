@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import { 
+      createRenderer, 
+      render, 
+      h, 
+      createVnode, 
+      Text, 
+      Fragment, 
+      ref,
+      onBeforeMount,
+      onMounted,
+      onBeforeUpdate,
+      onUpdated,
+      getCurrentInstance,
+      provide,
+      inject,
+      KeepAlive,
+      defineAsyncComponent
+    } from './runtime-dom.js'
+
+    // 可以动态的加载组件
+    // 异步组件的原理：刚开始渲染一个空，等有数据了后再渲染到空的那个位置。和图片懒加载类似
+    // 基于状态来实现，loaded ? h(组件) : h(空节点)
+    // 异步组件作用：页面级的渲染，不要一次性渲染很多，一部分一部分渲染。性能优化。可以减缓浏览器的渲染压力
+    const comp = import('./asyncComponent.js')
+    let i = 0 
+    const MyAsyncComponent = defineAsyncComponent({
+      loader: () => {
+        // 返回一个 Promise，resolve 是一个 组件
+        // return comp
+        i++
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            if (i === 3) {
+              resolve({
+                setup() {
+                  return () => {
+                    return h('h1', '你好世界')
+                  }
+                }
+              })
+            } else {
+              reject({
+                setup() {
+                  return () => {
+                    return h('h1', '你好世界')
+                  }
+                }
+              })
+            }
+            
+          }, 3000)
+        })
+      },
+      timeout: 1000,
+      errorComponent: {
+        setup() {
+          return () => h('h1', '异步组件加载出错啦！')
+        }
+      },
+      delay: 300,
+      loadingComponent: {
+        setup() {
+          return () => h('h1', 'loading!!!')
+        }
+      },
+      onError(error, retry, fail, attempts) {
+        console.log(attempts)
+        retry()
+        console.log("重新调用！！")
+      }
+    })
+    
+    render(h(MyAsyncComponent), app)
+  </script>
+</body>
+
+</html>

@@ -202,80 +202,80 @@
 // 1 2 4 6 7 9（2的前一个是1） // 最长递增子序列的个数就是6
 
 // 找最有潜力的
-const arr = [2, 3, 1, 5, 6, 8, 7, 9, 4, 2]
-const storage = [] // 先求出最长递增子序列的个数有多少个
-// 记录前一个的值 [[9, 7], [7, 6], [6, 5]]
-const mark = []
-// 最终结果
-const res = []
-for (let i = 0; i < arr.length; i++) {
-  const item = arr[i]
+// const arr = [2, 3, 1, 5, 6, 8, 7, 9, 4, 2]
+// const storage = [] // 先求出最长递增子序列的个数有多少个
+// // 记录前一个的值 [[9, 7], [7, 6], [6, 5]]
+// const mark = []
+// // 最终结果
+// const res = []
+// for (let i = 0; i < arr.length; i++) {
+//   const item = arr[i]
 
-  if (storage.length === 0) {
-    storage.push(item)
-    mark.push([null, item])
-  } else {
-    // item 是否大于存储最后一个
-    if (item >= storage[storage.length - 1]) {
-      mark.push([storage[storage.length - 1], item])
-      storage.push(item)
-    } else {
-      // 找出最有潜力的
-      let index = -1
-      let start = 0
-      let end = storage.length - 1
-      let middle
-      // 二分查找
-      while (start <= end) {
-        middle = ~~((start + end) / 2)
-        if (storage[middle] === item) {
-          index = middle
-          break
-        } else if (storage[middle] < item) {
-          start = middle + 1
-        } else if (storage[middle] > item) {
-          end = middle - 1
-        }
-      }
-      // for (let j = 0; j < storage.length; j++) {
-      //   const itex = storage[j]
-      //   if (itex > item) {
-      //     index = j
-      //     break
-      //   }
-      // }
-      const preVal = storage[index - 1] || null
-      storage[index] = item
-      mark.push([preVal, item])
-    }
-  }
-}
-let max = -1
-let maxIndex = -1
-for (let i = 0; i < mark.length; i++) {
-  const [pre, val] = mark[i];
-  if (max < val) {
-    max = val
-    maxIndex = i
-  }
-}
-const a = mark.slice(0, maxIndex + 1)
-let p = -1
-for (let i = a.length - 1; i >= 0; i--) {
-  const [pre, val] = a[i]
-  // console.log(pre, 'pre')
-  if (res.length === 0) {
-    res.push(val)
-    p = pre
-  } else {
-    if (val === p) {
-      res.push(val)
-      p = pre
-    }
-  }
-}
-res.reverse()
-console.log('最终结果：', res)
+//   if (storage.length === 0) {
+//     storage.push(item)
+//     mark.push([null, item])
+//   } else {
+//     // item 是否大于存储最后一个
+//     if (item >= storage[storage.length - 1]) {
+//       mark.push([storage[storage.length - 1], item])
+//       storage.push(item)
+//     } else {
+//       // 找出最有潜力的
+//       let index = -1
+//       let start = 0
+//       let end = storage.length - 1
+//       let middle
+//       // 二分查找
+//       while (start <= end) {
+//         middle = ~~((start + end) / 2)
+//         if (storage[middle] === item) {
+//           index = middle
+//           break
+//         } else if (storage[middle] < item) {
+//           start = middle + 1
+//         } else if (storage[middle] > item) {
+//           end = middle - 1
+//         }
+//       }
+//       // for (let j = 0; j < storage.length; j++) {
+//       //   const itex = storage[j]
+//       //   if (itex > item) {
+//       //     index = j
+//       //     break
+//       //   }
+//       // }
+//       const preVal = storage[index - 1] || null
+//       storage[index] = item
+//       mark.push([preVal, item])
+//     }
+//   }
+// }
+// let max = -1
+// let maxIndex = -1
+// for (let i = 0; i < mark.length; i++) {
+//   const [pre, val] = mark[i];
+//   if (max < val) {
+//     max = val
+//     maxIndex = i
+//   }
+// }
+// const a = mark.slice(0, maxIndex + 1)
+// let p = -1
+// for (let i = a.length - 1; i >= 0; i--) {
+//   const [pre, val] = a[i]
+//   // console.log(pre, 'pre')
+//   if (res.length === 0) {
+//     res.push(val)
+//     p = pre
+//   } else {
+//     if (val === p) {
+//       res.push(val)
+//       p = pre
+//     }
+//   }
+// }
+// res.reverse()
+// console.log('最终结果：', res)
 
 // // const find = 6
 // // const er = [1, 4, 6, 8, 9, 10]
@@ -318,58 +318,76 @@ console.log('最终结果：', res)
 //   console.log(`未找到目标元素 ${find}`);
 // }
 
-function check(target) {
-  if (target === null) {
-    return true
-  }
+// function check(target) {
+//   if (target === null) {
+//     return true
+//   }
 
-  if (['string', 'number', 'boolean', 'undefined'].includes(typeof target)) {
-    return true
-  }
+//   if (['string', 'number', 'boolean', 'undefined'].includes(typeof target)) {
+//     return true
+//   }
 
-  return false
-}
+//   return false
+// }
 
-function deepClone(target) {
-  if (check(target)) {
-    return target
-  }
+// function deepClone(target) {
+//   if (check(target)) {
+//     return target
+//   }
 
-  let res 
-  if (typeof target === 'object') {
-    if (Array.isArray(target)) {
-      res = []
-    } else {
-      res = {}
-    }
+//   let res 
+//   if (typeof target === 'object') {
+//     if (Array.isArray(target)) {
+//       res = []
+//     } else {
+//       res = {}
+//     }
   
-    for (const key in target) {
-      const val = target[key]
-      // 说明是普通类型
-      if (check(val)) {
-        res[key] = val 
-      } else {
-        res[key] = deepClone(val)
-      }
-    }
-  }
+//     for (const key in target) {
+//       const val = target[key]
+//       // 说明是普通类型
+//       if (check(val)) {
+//         res[key] = val 
+//       } else {
+//         res[key] = deepClone(val)
+//       }
+//     }
+//   }
 
-  return res
+//   return res
+// }
+
+// const obj = {
+//   a: 1,
+//   b: {
+//     hh: 2,
+//     c: {
+//       d: 3
+//     }
+//   }
+// }
+// const array = [1, {a: 2}, 3, {b: 4, c:{d: 5}}]
+// const str = '你好世界'
+
+// const clone = deepClone(array)
+// clone[0] = 100
+// console.log(clone)
+// console.log(array)
+
+function fn() {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      // resolve 时 p2 的状态是 fulfilled，reject 时 p2 的状态是 rejected
+      // resolve('状态吸收') 
+      reject('状态吸收')
+    }, 2000)
+  })
 }
-
-const obj = {
-  a: 1,
-  b: {
-    hh: 2,
-    c: {
-      d: 3
-    }
-  }
-}
-const array = [1, {a: 2}, 3, {b: 4, c:{d: 5}}]
-const str = '你好世界'
-
-const clone = deepClone(array)
-clone[0] = 100
-console.log(clone)
-console.log(array)
+const p2 = new Promise((resolve) => {
+  resolve(fn()) // p2 的状态不一定是成功的。要看 fn 返回的状态，若 fn 返回成功则成功，返回失败则失败
+})
+p2.then((res) => {
+  console.log('res :', res)
+}).catch((err) => {
+  console.log('err: ' + err) // 会进这，err 是 '状态吸收' 字符串
+})

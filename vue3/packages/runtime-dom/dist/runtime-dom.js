@@ -164,7 +164,7 @@ function h(type, propsOrChildren, children) {
 // packages/runtime-core/src/seq.ts
 function getSequence(arr) {
   const result = [0];
-  const p2 = result.slice(0);
+  const p3 = result.slice(0);
   let start;
   let end;
   let middle;
@@ -174,7 +174,7 @@ function getSequence(arr) {
     if (arrI !== 0) {
       let resultLastIndex = result[result.length - 1];
       if (arr[resultLastIndex] < arrI) {
-        p2[i] = result[result.length - 1];
+        p3[i] = result[result.length - 1];
         result.push(i);
         continue;
       }
@@ -190,7 +190,7 @@ function getSequence(arr) {
       }
     }
     if (arrI < arr[result[start]]) {
-      p2[i] = result[start - 1];
+      p3[i] = result[start - 1];
       result[start] = i;
     }
   }
@@ -198,14 +198,14 @@ function getSequence(arr) {
   let last = result[l - 1];
   while (l-- > 0) {
     result[l] = last;
-    last = p2[last];
+    last = p3[last];
   }
   return result;
 }
 
 // packages/reactivity/src/effect.ts
-function effect(fn, options) {
-  const _effect = new ReactiveEffect(fn, () => {
+function effect(fn2, options) {
+  const _effect = new ReactiveEffect(fn2, () => {
     _effect.run();
   });
   _effect.run();
@@ -218,8 +218,8 @@ function effect(fn, options) {
 }
 var activeEffect = [];
 var ReactiveEffect = class {
-  constructor(fn, schedulder) {
-    this.fn = fn;
+  constructor(fn2, schedulder) {
+    this.fn = fn2;
     this.schedulder = schedulder;
     // 创建的 effect 是响应式的
     this.active = true;
@@ -566,9 +566,9 @@ function doWatch(source, cb, options) {
   }
   let oldValue;
   let clean = null;
-  const onCleanup = (fn) => {
+  const onCleanup = (fn2) => {
     clean = () => {
-      fn();
+      fn2();
       clean = null;
     };
   };
@@ -1292,6 +1292,96 @@ function inject(key, defaultVal) {
   }
 }
 
+// packages/runtime-core/src/defineAsyncComponent.ts
+function defineAsyncComponent(options) {
+  if (isFunction(options)) {
+    let loader2 = options;
+    options = {
+      loader: loader2
+    };
+  }
+  const { loader, timeout, errorComponent, delay = 0, loadingComponent, onError } = options;
+  const loaded = ref(false);
+  const error = ref(false);
+  const loading = ref(false);
+  async function loadFunc() {
+    return loader().catch((err) => {
+      return new Promise((resolve, reject) => {
+        if (onError) {
+          const retry = () => {
+            resolve(loadFunc());
+          };
+          const fail = () => {
+            reject();
+          };
+          onError(err, retry, fail, ++attempts);
+        }
+      });
+    });
+  }
+  let attempts = 0;
+  let comp = null;
+  loadFunc().then((res) => {
+    loaded.value = true;
+    if (Object.prototype.toString.call(res) === "[object Module]") {
+      comp = res.default;
+    } else {
+      comp = res;
+    }
+  }).catch((err) => {
+    error.value = true;
+  }).finally(() => {
+    loading.value = false;
+  });
+  let errorComp;
+  if (timeout && errorComponent) {
+    setTimeout(() => {
+      error.value = true;
+      errorComp = h(errorComponent);
+    }, timeout);
+  } else {
+    errorComp = h("div", "\u5185\u90E8\u7ED9\u51FA\u7684 error \u7EC4\u4EF6");
+  }
+  let loadingComp;
+  if (delay && loadingComponent) {
+    setTimeout(() => {
+      loading.value = true;
+      loadingComp = h(loadingComponent);
+    }, delay);
+  }
+  return {
+    setup() {
+      return () => {
+        if (loaded.value) {
+          console.log("\u8FD9\u91CC\u9762");
+          return h(comp);
+        } else if (error.value) {
+          return errorComp;
+        } else if (loading.value) {
+          return loadingComp;
+        } else {
+          return h("div", "pedding");
+        }
+      };
+    }
+  };
+}
+function fn() {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      reject("\u72B6\u6001\u5438\u6536");
+    }, 2e3);
+  });
+}
+var p2 = new Promise((resolve) => {
+  resolve(fn());
+});
+p2.then((res) => {
+  console.log("res :", res);
+}).catch((err) => {
+  console.log("err: " + err);
+});
+
 // packages/runtime-dom/src/index.ts
 var renderOptions = {
   ...nodeOps,
@@ -1312,6 +1402,7 @@ export {
   createRenderer,
   createVnode,
   currentInstance,
+  defineAsyncComponent,
   effect,
   getCurrentInstance,
   h,
