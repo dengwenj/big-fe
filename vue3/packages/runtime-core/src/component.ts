@@ -22,8 +22,9 @@ export function createComponentInstance(vnode, parent) {
     render: null, // 组件实例的 render
     setupState: {}, // setup 函数返回的数据
     exposed: null, // 暴露
-    parent, // 父组件
-    provides: parent ? parent.provides : Object.create(null)
+    parent, // 父组件 实例
+    provides: parent ? parent.provides : Object.create(null),
+    ctx: {} as any, // 如果是 keepalive 组件，就将 dom api 放入到这个属性上
   }
 
   return instance

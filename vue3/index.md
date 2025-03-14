@@ -275,7 +275,7 @@ export function trigger(target: object, key: any, newValue: any, oldValue: any) 
 }
 ```
 
-### vue3 初始化组件
+### vue3 初始化组件（3步，具体实现在 renderer 文件的 mountComponent 函数）
 * 1、先创建组件实例
 * 2、给实例的属性赋值
-* 3、创建一个 effect
+* 3、创建一个 effect (在这里里面去 render 渲染的，最终呈现到页面上)

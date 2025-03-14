@@ -277,43 +277,99 @@ for (let i = a.length - 1; i >= 0; i--) {
 res.reverse()
 console.log('最终结果：', res)
 
-// const find = 6
-// const er = [1, 4, 6, 8, 9, 10]
-// let start = 0
-// let end = er.length - 1
-// let middle
-// while (start < end) {
-//   middle = ~~((start + end) / 2)
-//   if (er[middle] < find) {
-//     start = middle + 1
+// // const find = 6
+// // const er = [1, 4, 6, 8, 9, 10]
+// // let start = 0
+// // let end = er.length - 1
+// // let middle
+// // while (start < end) {
+// //   middle = ~~((start + end) / 2)
+// //   if (er[middle] < find) {
+// //     start = middle + 1
+// //   } else {
+// //     end = middle
+// //   }
+// // }
+
+// const find = 6;
+// const er = [1, 4, 6, 8, 9, 10];
+// let start = 0;
+// let end = er.length - 1;
+// let middle;
+// let found = false;
+// let index = -1;
+
+// while (start <= end) {
+//   middle = Math.floor((start + end) / 2);
+//   if (er[middle] === find) {
+//     found = true;
+//     index = middle;
+//     break;
+//   } else if (er[middle] < find) {
+//     start = middle + 1;
 //   } else {
-//     end = middle
+//     end = middle - 1;
 //   }
 // }
 
-const find = 6;
-const er = [1, 4, 6, 8, 9, 10];
-let start = 0;
-let end = er.length - 1;
-let middle;
-let found = false;
-let index = -1;
+// if (found) {
+//   console.log(`找到了目标元素 ${find}，其索引位置是 ${index}`);
+// } else {
+//   console.log(`未找到目标元素 ${find}`);
+// }
 
-while (start <= end) {
-  middle = Math.floor((start + end) / 2);
-  if (er[middle] === find) {
-    found = true;
-    index = middle;
-    break;
-  } else if (er[middle] < find) {
-    start = middle + 1;
-  } else {
-    end = middle - 1;
+function check(target) {
+  if (target === null) {
+    return true
+  }
+
+  if (['string', 'number', 'boolean', 'undefined'].includes(typeof target)) {
+    return true
+  }
+
+  return false
+}
+
+function deepClone(target) {
+  if (check(target)) {
+    return target
+  }
+
+  let res 
+  if (typeof target === 'object') {
+    if (Array.isArray(target)) {
+      res = []
+    } else {
+      res = {}
+    }
+  
+    for (const key in target) {
+      const val = target[key]
+      // 说明是普通类型
+      if (check(val)) {
+        res[key] = val 
+      } else {
+        res[key] = deepClone(val)
+      }
+    }
+  }
+
+  return res
+}
+
+const obj = {
+  a: 1,
+  b: {
+    hh: 2,
+    c: {
+      d: 3
+    }
   }
 }
+const array = [1, {a: 2}, 3, {b: 4, c:{d: 5}}]
+const str = '你好世界'
 
-if (found) {
-  console.log(`找到了目标元素 ${find}，其索引位置是 ${index}`);
-} else {
-  console.log(`未找到目标元素 ${find}`);
-}
+const clone = deepClone(array)
+clone[0] = 100
+console.log(clone)
+console.log(array)

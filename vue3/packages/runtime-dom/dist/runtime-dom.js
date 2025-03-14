@@ -661,8 +661,10 @@ function createComponentInstance(vnode, parent) {
     exposed: null,
     // 暴露
     parent,
-    // 父组件
-    provides: parent ? parent.provides : /* @__PURE__ */ Object.create(null)
+    // 父组件 实例
+    provides: parent ? parent.provides : /* @__PURE__ */ Object.create(null),
+    ctx: {}
+    // 如果是 keepalive 组件，就将 dom api 放入到这个属性上
   };
   return instance;
 }
@@ -806,6 +808,74 @@ function invokeLifeCycleHooks(hooks) {
     hook();
   }
 }
+
+// packages/runtime-core/src/components/KeepAlive.ts
+var KeepAlive = {
+  __isKeepAlive: true,
+  props: {
+    max: Number
+  },
+  setup(props, { slots }) {
+    const { max } = props;
+    const keys = /* @__PURE__ */ new Set();
+    const cache = /* @__PURE__ */ new Map();
+    let pendingCacheKey = null;
+    const instance = getCurrentInstance();
+    const cacheSubTree = () => {
+      cache.set(pendingCacheKey, instance.subTree);
+    };
+    const { move, createElement, unmount: _unmount } = instance.ctx.renderer;
+    function reset(vnode) {
+      let shapeFlag = vnode.shapeFlag;
+      if (shapeFlag & 512 /* COMPONENT_KEPT_ALIVE */) {
+        shapeFlag -= 512 /* COMPONENT_KEPT_ALIVE */;
+      }
+      if (shapeFlag & 256 /* COMPONENT_SHOULD_KEEP_ALIVE */) {
+        shapeFlag -= 256 /* COMPONENT_SHOULD_KEEP_ALIVE */;
+      }
+      vnode.shapeFlag = shapeFlag;
+    }
+    function unmount(vnode) {
+      reset(vnode);
+      _unmount(vnode);
+    }
+    function purneCacheEntry(key) {
+      keys.delete(key);
+      const cached = cache.get(key);
+      unmount(cached);
+    }
+    instance.ctx.activate = function(vnode, container, anchor) {
+      move(vnode, container, anchor);
+    };
+    const storageContent = createElement("div");
+    instance.ctx.deactivate = function(vnode) {
+      move(vnode, storageContent, null);
+    };
+    onMounted(cacheSubTree);
+    onUpdated(cacheSubTree);
+    return () => {
+      const vnode = slots.default();
+      const comp = vnode.type;
+      const key = vnode.key == null ? comp : vnode.key;
+      const cacheVNode = cache.get(key);
+      pendingCacheKey = key;
+      if (cacheVNode) {
+        vnode.component = cacheVNode.component;
+        vnode.shapeFlag |= 512 /* COMPONENT_KEPT_ALIVE */;
+        keys.delete(key);
+        keys.add(key);
+      } else {
+        keys.add(key);
+        if (max && keys.size > max) {
+          purneCacheEntry(keys.values().next().value);
+        }
+      }
+      vnode.shapeFlag |= 256 /* COMPONENT_SHOULD_KEEP_ALIVE */;
+      return vnode;
+    };
+  }
+};
+var isKeepAlive = (value) => value.type.__isKeepAlive;
 
 // packages/runtime-core/src/renderer.ts
 function createRenderer(renderOptions2) {
@@ -1012,6 +1082,7 @@ function createRenderer(renderOptions2) {
     instance.next = null;
     instance.vnode = next;
     updateProps(instance, instance.props, next.props);
+    Object.assign(instance.slots, next.children);
   };
   function renderComponent(instance) {
     const { vnode, render: render3, proxy, attrs } = instance;
@@ -1062,10 +1133,24 @@ function createRenderer(renderOptions2) {
   const mountComponent = (vnode, container, anchor, parentComponent) => {
     const instance = createComponentInstance(vnode, parentComponent);
     vnode.component = instance;
+    if (isKeepAlive(vnode)) {
+      instance.ctx.renderer = {
+        createElement: hostCreateElement,
+        // 内部需要创建一个 div 来缓存 dom
+        move(vnode2, container2) {
+          hostInsert(vnode2.component.subTree.el, container2);
+        },
+        unmount
+        // 如果组件切换需要将现在容器中的元素移除
+      };
+    }
     setupComponent(instance);
     setupRenderEffect(instance, container, anchor);
   };
   const hasPropsChange = (preProps, nextProps) => {
+    if (nextProps === null) {
+      nextProps = {};
+    }
     const preKeys = Object.keys(preProps);
     const nextKeys = Object.keys(nextProps);
     if (preKeys.length !== nextKeys.length) {
@@ -1110,7 +1195,11 @@ function createRenderer(renderOptions2) {
   };
   const processComponent = (n1, n2, container, anchor, parentComponent) => {
     if (n1 === null) {
-      mountComponent(n2, container, anchor, parentComponent);
+      if (n2.shapeFlag & 512 /* COMPONENT_KEPT_ALIVE */) {
+        parentComponent.ctx.activate(n2, container, anchor);
+      } else {
+        mountComponent(n2, container, anchor, parentComponent);
+      }
     } else {
       updateComponent(n1, n2);
     }
@@ -1213,6 +1302,7 @@ var render = (vNode, container) => {
 };
 export {
   Fragment,
+  KeepAlive,
   LifeCycle,
   ReactiveEffect,
   Text,
@@ -1227,6 +1317,7 @@ export {
   h,
   inject,
   invokeLifeCycleHooks,
+  isKeepAlive,
   isReactive,
   isRef,
   isSameVnode,

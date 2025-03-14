@@ -5,6 +5,7 @@ import { isRef, ReactiveEffect } from "@vue/reactivity"
 import { queueJob } from "./schedulder"
 import { createComponentInstance, setupComponent } from "./component"
 import { invokeLifeCycleHooks } from "./apiLifeCycle"
+import { isKeepAlive } from "./components/KeepAlive"
 
 /**
  * 调用 h 函数 根据传入的参数 会创建出虚拟 dom(js 对象)
@@ -309,6 +310,7 @@ export function createRenderer(renderOptions) {
     instance.next = null
     instance.vnode = next 
     updateProps(instance, instance.props, next.props)
+    Object.assign(instance.slots, next.children)
   }
 
   function renderComponent(instance) {
@@ -323,7 +325,6 @@ export function createRenderer(renderOptions) {
   function setupRenderEffect(instance, container, anchor) {
     const componentUpdateFn = () => {
       const { next, bm, m, bu, u } = instance
-
       let subTree
       // 初始化
       if (!instance.isMounted) {
@@ -381,6 +382,17 @@ export function createRenderer(renderOptions) {
     const instance = createComponentInstance(vnode, parentComponent)
     vnode.component = instance
 
+    if (isKeepAlive(vnode)) {
+      instance.ctx.renderer = {
+        createElement: hostCreateElement, // 内部需要创建一个 div 来缓存 dom
+        move(vnode, container) {
+          // 需要把之前渲染的 dom 放入到容器中
+          hostInsert(vnode.component.subTree.el, container)
+        },
+        unmount, // 如果组件切换需要将现在容器中的元素移除
+      }
+    }
+
     // 元素更新 n2.el = n1.el
     // 组件更新 n2.component.subTree.el = n1.component.subTree.el, subTree 就是 render 函数的返回值虚拟dom
 
@@ -392,6 +404,9 @@ export function createRenderer(renderOptions) {
   }
 
   const hasPropsChange = (preProps, nextProps) => {
+    if (nextProps === null) {
+      nextProps = {}
+    }
     const preKeys = Object.keys(preProps)
     const nextKeys = Object.keys(nextProps)
 
@@ -431,7 +446,6 @@ export function createRenderer(renderOptions) {
     // 组件属性是否变化，插槽是否有变化
     const { props: preProps, children: preChildren } = n1
     const { props: nextProps, children: nextChildren } = n2
-
     // 有插槽直接走重新渲染
     if (preChildren || nextChildren) {
       return true
@@ -461,8 +475,13 @@ export function createRenderer(renderOptions) {
   const processComponent = (n1, n2, container, anchor, parentComponent) => {
     // n1, n2 是组件虚拟dom，它上面 type 是组件实例(对象)
     if (n1 === null) {
-      // 组件首次加载
-      mountComponent(n2, container, anchor, parentComponent)
+      // 是否有 keepalive
+      if (n2.shapeFlag & ShapeFlags.COMPONENT_KEPT_ALIVE) {
+        parentComponent.ctx.activate(n2, container, anchor)
+      } else {
+        // 组件首次加载
+        mountComponent(n2, container, anchor, parentComponent)
+      }
     } else {
       // 进这里有一个前提：就是有子组件
       // 组件更新有三种方式（状态，属性，插槽）
