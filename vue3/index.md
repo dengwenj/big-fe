@@ -279,3 +279,8 @@ export function trigger(target: object, key: any, newValue: any, oldValue: any) 
 * 1、先创建组件实例
 * 2、给实例的属性赋值
 * 3、创建一个 effect (在这里里面去 render 渲染的，最终呈现到页面上)
+
+
+### 性能优化
+* 如果在编写 vue 的时候，直接采用 jsx 或者 h 的写法，得不到优化的。vue 对模版的写法进行了优化。如下：
+* 1、PatchFlag 优化：diff算法无法避免新旧虚拟 dom 中无用的比较操作，通过 patchFlags 来标记**动态内容**，可以实现快速 diff 算法。就是静态写死的不用比较，只比较动态的。放入到一个队列里，前队列和后队列，一个对一个比较
