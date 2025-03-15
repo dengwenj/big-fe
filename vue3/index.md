@@ -276,6 +276,7 @@ export function trigger(target: object, key: any, newValue: any, oldValue: any) 
 ```
 
 ### TODO 虚拟 DOM
+* 用一个对象来描述真实 DOM
 
 ### TODO Diff 算法
 
@@ -290,3 +291,8 @@ export function trigger(target: object, key: any, newValue: any, oldValue: any) 
 * 2、block 用于收集动态节点的。PatchFlag 是用来标识动态内容。blockTree 收集复杂的结构（v-if v-else v-for 不稳定的结构）
 * 靶向更新：避免了不必要的 DOM 重新渲染，减少了浏览器的重排和重绘操作，从而提高了应用的性能。（PatchFlag 优化），靶向更新：只比较动态节点，不会全量 diff。
 * 为什么能做到比之前的全量 diff 性能更高？就是在模版编译的时候加了很多动态内容的标识。然后 renderer 时，一系列判断是否进入全量diff。这就是为什么 vue 用模版编写性能比较高
+
+### 编译
+* 1、语法转化成一个对象 ast 语法树
+* 2、对树进行优化（打标记 patchFlag）
+* 3、根据转化后的代码生成一个字符串
