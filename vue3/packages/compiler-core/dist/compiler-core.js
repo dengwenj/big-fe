@@ -40,6 +40,8 @@ function parseText(context, content) {
     content: data
   };
 }
+function parseElement(context, content) {
+}
 function parserChildren(context) {
   const nodes = [];
   while (!isEnd(context.source)) {
@@ -47,6 +49,7 @@ function parserChildren(context) {
     let node;
     if (content.startsWith("{{")) {
     } else if (content[0] === "<") {
+      node = parseElement(context, content);
     } else {
       node = parseText(context, content);
     }

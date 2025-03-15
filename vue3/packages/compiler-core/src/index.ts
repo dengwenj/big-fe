@@ -56,6 +56,10 @@ function parseText(context, content: string) { // 内容   {{}}
   }
 }
 
+function parseElement(context, content) {
+  
+}
+
 function parserChildren(context) {
   const nodes = [] as any[]
 
@@ -68,6 +72,7 @@ function parserChildren(context) {
       // 表达式
     } else if (content[0] === '<') { // 字符串首是否是 < 开头
       // 元素
+      node = parseElement(context, content)
     } else { // 字符串首是否是 文本 开头
       // 文本
       node = parseText(context, content)
