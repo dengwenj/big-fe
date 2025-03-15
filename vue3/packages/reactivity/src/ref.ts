@@ -1,3 +1,4 @@
+import { isObject } from '@vue/shared'
 import { toReactive } from './reactive'
 import { track, trigger } from './reactiveEffect'
 
@@ -32,8 +33,10 @@ class RefImpl {
 
   // get 时依赖收集
   get value() {
-    // 收集依赖
-    trackRef(this, RefImpl.VALUE)
+    if (!isObject(this._value)) {
+      // 收集依赖
+      trackRef(this, RefImpl.VALUE)
+    }
     return this._value
   }
 

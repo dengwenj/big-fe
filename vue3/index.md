@@ -275,12 +275,18 @@ export function trigger(target: object, key: any, newValue: any, oldValue: any) 
 }
 ```
 
+### TODO 虚拟 DOM
+
+### TODO Diff 算法
+
 ### vue3 初始化组件（3步，具体实现在 renderer 文件的 mountComponent 函数）
 * 1、先创建组件实例
 * 2、给实例的属性赋值
 * 3、创建一个 effect (在这里里面去 render 渲染的，最终呈现到页面上)
 
-
 ### 性能优化
 * 如果在编写 vue 的时候，直接采用 jsx 或者 h 的写法，得不到优化的。vue 对模版的写法进行了优化。如下：
 * 1、PatchFlag 优化：diff算法无法避免新旧虚拟 dom 中无用的比较操作，通过 patchFlags 来标记**动态内容**，可以实现快速 diff 算法。就是静态写死的不用比较，只比较动态的。放入到一个队列里，前队列和后队列，一个对一个比较
+* 2、block 用于收集动态节点的。PatchFlag 是用来标识动态内容。blockTree 收集复杂的结构（v-if v-else v-for 不稳定的结构）
+* 靶向更新：避免了不必要的 DOM 重新渲染，减少了浏览器的重排和重绘操作，从而提高了应用的性能。（PatchFlag 优化），靶向更新：只比较动态节点，不会全量 diff。
+* 为什么能做到比之前的全量 diff 性能更高？就是在模版编译的时候加了很多动态内容的标识。然后 renderer 时，一系列判断是否进入全量diff。这就是为什么 vue 用模版编写性能比较高

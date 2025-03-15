@@ -17,6 +17,7 @@
       createVnode, 
       Text, 
       Fragment, 
+      reactive,
       ref,
       onBeforeMount,
       onMounted,
@@ -26,8 +27,33 @@
       provide,
       inject,
       KeepAlive,
-      defineAsyncComponent
+      defineAsyncComponent,
+      effect,
+      openBlock,
+      createElementBlock,
+      createElementVNode,
+      toDisplayString
     } from './runtime-dom.js'
+
+    const MyComponent = {
+        setup() {
+          const state = reactive({ name: '朴睦' });
+          return {
+            name: state.name
+          };
+        },
+        render(_ctx) {
+          const vnode =
+            (openBlock(),
+              createElementBlock("div", null, [
+                createElementVNode("div", null, 'hello'),
+                createElementVNode("span", null, toDisplayString(_ctx.name),  1 /* TEXT */), // vue 模版会编译成这样的
+              ]));
+          console.log(vnode);
+          return vnode;
+        },
+      };
+      render(h(MyComponent), app);
   </script>
 </body>
 

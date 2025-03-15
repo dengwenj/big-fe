@@ -112,20 +112,20 @@ export function defineAsyncComponent(options: AsyncComponentOptions | AsyncCompo
 
 
 // 37 行一样的例子 loadFunc 函数
-function fn() {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      // resolve 时 p2 的状态是 fulfilled，reject 时 p2 的状态是 rejected
-      // resolve('状态吸收') 
-      reject('状态吸收')
-    }, 2000)
-  })
-}
-const p2 = new Promise((resolve) => {
-  resolve(fn()) // p2 的状态不一定是成功的。要看 fn 返回的状态，若 fn 返回成功则成功，返回失败则失败
-})
-p2.then((res) => {
-  console.log('res :', res)
-}).catch((err) => {
-  console.log('err: ' + err) // 会进这，err 是 '状态吸收' 字符串
-})
+// function fn() {
+//   return new Promise((resolve, reject) => {
+//     setTimeout(() => {
+//       // resolve 时 p2 的状态是 fulfilled，reject 时 p2 的状态是 rejected
+//       // resolve('状态吸收') 
+//       reject('状态吸收')
+//     }, 2000)
+//   })
+// }
+// const p2 = new Promise((resolve) => {
+//   resolve(fn()) // p2 的状态不一定是成功的。要看 fn 返回的状态，若 fn 返回成功则成功，返回失败则失败
+// })
+// p2.then((res) => {
+//   console.log('res :', res)
+// }).catch((err) => {
+//   console.log('err: ' + err) // 会进这，err 是 '状态吸收' 字符串
+// })

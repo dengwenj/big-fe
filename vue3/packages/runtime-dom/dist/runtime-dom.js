@@ -112,7 +112,7 @@ var Fragment = Symbol("Fragment");
 function isSameVnode(n1, n2) {
   return n1.type === n2.type && n1.key === n2.key;
 }
-function createVnode(type, props, children) {
+function createVnode(type, props, children, patchFlag) {
   const shapeFlag = isString(type) ? 1 /* ELEMENT */ : isObject(type) ? 4 /* STATEFUL_COMPONENT */ : isFunction(type) ? 2 /* FUNCTIONAL_COMPONENT */ : 0;
   const vnode = {
     __v_isVnode: true,
@@ -124,8 +124,12 @@ function createVnode(type, props, children) {
     // 虚拟节点对应的真实节点是谁
     key: props?.key,
     // diff 算法后面需要的 key
-    ref: props?.ref
+    ref: props?.ref,
+    patchFlag
   };
+  if (currentBlock && patchFlag > 0) {
+    currentBlock.push(vnode);
+  }
   if (Array.isArray(children)) {
     vnode.shapeFlag |= 16 /* ARRAY_CHILDREN */;
   } else if (isObject(children)) {
@@ -134,6 +138,25 @@ function createVnode(type, props, children) {
     vnode.shapeFlag |= 8 /* TEXT_CHILDREN */;
   }
   return vnode;
+}
+var currentBlock = null;
+function openBlock() {
+  currentBlock = [];
+}
+function closeBlock() {
+  currentBlock = null;
+}
+function setupBlock(vnode) {
+  vnode.dynamicChildren = currentBlock;
+  closeBlock();
+  return vnode;
+}
+function createElementBlock(type, props, children, patchFlag) {
+  const vnode = createVnode(type, props, children, patchFlag);
+  return setupBlock(vnode);
+}
+function toDisplayString(value) {
+  return isString(value) ? value : value == null ? "" : isObject(value) ? JSON.stringify(value) : String(value);
 }
 
 // packages/runtime-core/src/h.ts
@@ -164,7 +187,7 @@ function h(type, propsOrChildren, children) {
 // packages/runtime-core/src/seq.ts
 function getSequence(arr) {
   const result = [0];
-  const p3 = result.slice(0);
+  const p2 = result.slice(0);
   let start;
   let end;
   let middle;
@@ -174,7 +197,7 @@ function getSequence(arr) {
     if (arrI !== 0) {
       let resultLastIndex = result[result.length - 1];
       if (arr[resultLastIndex] < arrI) {
-        p3[i] = result[result.length - 1];
+        p2[i] = result[result.length - 1];
         result.push(i);
         continue;
       }
@@ -190,7 +213,7 @@ function getSequence(arr) {
       }
     }
     if (arrI < arr[result[start]]) {
-      p3[i] = result[start - 1];
+      p2[i] = result[start - 1];
       result[start] = i;
     }
   }
@@ -198,14 +221,14 @@ function getSequence(arr) {
   let last = result[l - 1];
   while (l-- > 0) {
     result[l] = last;
-    last = p3[last];
+    last = p2[last];
   }
   return result;
 }
 
 // packages/reactivity/src/effect.ts
-function effect(fn2, options) {
-  const _effect = new ReactiveEffect(fn2, () => {
+function effect(fn, options) {
+  const _effect = new ReactiveEffect(fn, () => {
     _effect.run();
   });
   _effect.run();
@@ -218,8 +241,8 @@ function effect(fn2, options) {
 }
 var activeEffect = [];
 var ReactiveEffect = class {
-  constructor(fn2, schedulder) {
-    this.fn = fn2;
+  constructor(fn, schedulder) {
+    this.fn = fn;
     this.schedulder = schedulder;
     // 创建的 effect 是响应式的
     this.active = true;
@@ -430,7 +453,9 @@ var RefImpl = class _RefImpl {
   }
   // get 时依赖收集
   get value() {
-    trackRef(this, _RefImpl.VALUE);
+    if (!isObject(this._value)) {
+      trackRef(this, _RefImpl.VALUE);
+    }
     return this._value;
   }
   // set 时派发更新
@@ -566,9 +591,9 @@ function doWatch(source, cb, options) {
   }
   let oldValue;
   let clean = null;
-  const onCleanup = (fn2) => {
+  const onCleanup = (fn) => {
     clean = () => {
-      fn2();
+      fn();
       clean = null;
     };
   };
@@ -1366,21 +1391,6 @@ function defineAsyncComponent(options) {
     }
   };
 }
-function fn() {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      reject("\u72B6\u6001\u5438\u6536");
-    }, 2e3);
-  });
-}
-var p2 = new Promise((resolve) => {
-  resolve(fn());
-});
-p2.then((res) => {
-  console.log("res :", res);
-}).catch((err) => {
-  console.log("err: " + err);
-});
 
 // packages/runtime-dom/src/index.ts
 var renderOptions = {
@@ -1397,8 +1407,11 @@ export {
   ReactiveEffect,
   Text,
   activeEffect,
+  closeBlock,
   computed,
   createComponentInstance,
+  createElementBlock,
+  createVnode as createElementVNode,
   createRenderer,
   createVnode,
   currentInstance,
@@ -1417,14 +1430,17 @@ export {
   onBeforeUpdate,
   onMounted,
   onUpdated,
+  openBlock,
   provide,
   proxyRefs,
   reactive,
   ref,
   render,
   setCurrentInstance,
+  setupBlock,
   setupComponent,
   targetEffects,
+  toDisplayString,
   toReactive,
   toRef,
   toRefs,
