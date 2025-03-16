@@ -31,3 +31,6 @@
   - react-router-dom
     - useLocation
     - useNavigate
+
+### useMemo
+* useMemo 和 vue 的computed 类似，都是有缓存的，当依赖项没发生改变(dirty)的时候，直接返回原来的值
