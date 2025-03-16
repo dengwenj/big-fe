@@ -226,17 +226,15 @@
 //       let end = storage.length - 1
 //       let middle
 //       // 二分查找
-//       while (start <= end) {
-//         middle = ~~((start + end) / 2)
-//         if (storage[middle] === item) {
-//           index = middle
-//           break
-//         } else if (storage[middle] < item) {
-//           start = middle + 1
-//         } else if (storage[middle] > item) {
-//           end = middle - 1
-//         }
-//       }
+            // while (start < end) {
+            //   const mid = Math.floor((left + right) / 2);
+            //   if (storage[mid] < item) {
+            //     start = mid + 1;
+            //   } else {
+            //     end = mid;
+            //   }
+            //  index = start
+            // }
 //       // for (let j = 0; j < storage.length; j++) {
 //       //   const itex = storage[j]
 //       //   if (itex > item) {
