@@ -80,3 +80,36 @@ resolve: {
   - 输出文件：最后，Vite 会将打包和优化后的文件输出到指定的目录中，你可以将这些文件部署到生产服务器上。
 
 ### vite bundleless -- 少打包，浏览器 esm 支持
+
+### 对 Vite 的理解，什么是 bundleless ？
+- 回答 bundleless 之前，必须要有模块化的知识
+  - commonjs
+  - amd
+  - cmd
+  - esm（es module）
+- 正是 esm 的浏览器支持，才有 bundleless 方案
+
+### 在 Vite 中，Bundleless 构建主要基于以下几点：
+- ES 模块支持：现代浏览器和 Node.js 都支持 ES 模块（ES Modules），这使得可以直接在浏览器或 Node.js 中引入和使用独立的模块文件，而不需要将它们打包在一起。
+- 按需加载：在 Bundleless 模式下，浏览器会根据页面的实际需求按需加载所需的模块文件，而不是一次性加载所有的代码。
+- esm 的支持，成就了 vite。有了 esm，就出现了 bundleless 的概念，因为 improt 浏览器会执行，不用再去打包在一起
+
+- bundle 打包，比如 webpack 需要通过模块化规范支持，依赖分析完之后构建依赖图 depGraph
+- bundleless，提倡少打包、不打包。js可以不打包，但是 ts、tsx、jsx、vue 这些是浏览器不支持的，import './1.css' 也不支持，所以这些事需要打包的
+
+### 产物构建机制
+- 产物的构建从来不是依赖于打包工具，而是依赖于编译工具
+- webpack 里面，要编译 js，比如 es6 变成 es5，用的是 babel 编译
+
+### 打包
+- 是将多个文件（如 JavaScript、CSS、图片等）合并成一个或少数几个文件的过程。它会分析文件之间的依赖关系，按照一定的规则将这些文件整合在一起，形成一个或多个最终的资源包。
+
+### 编译
+- 是将一种编程语言编写的代码转换为另一种编程语言或同一语言的不同版本代码的过程。通常是将高级语言代码（如 TypeScript、Sass）转换为计算机能够直接执行或浏览器能够理解的低级语言代码（如 JavaScript、CSS）。
+
+### Vite 开发环境
+- js 不用打包直出，代码资源：ts、tsx、jsx、vue，样式资源：css，字体：woff2 这些是需要打包的。先编译成浏览器能够认识的再打包(打包：把这些文件合到其他文件去)
+  - 用 esbuild 来构建 ts、tsx、jsx
+  - postcss -> css
+  - 需要针对需要打包的资源，做转换处理
+  - vite 的插件 **vite-pluign-xxx** 来转换内容，vite-pluign-vue，vite-pluign-react
