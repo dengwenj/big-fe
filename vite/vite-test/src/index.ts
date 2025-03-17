@@ -1,3 +1,5 @@
+import './index.css'
+
 interface User {
   name: string
   age: number,
