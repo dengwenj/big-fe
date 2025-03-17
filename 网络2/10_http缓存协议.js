@@ -3,7 +3,7 @@
  * 
  * 使用版本号和 hash 缓存，是用于缓存 js 或 css，当 hash 变化时，缓存失效会从新获取
  * 这里是缓存的外链。没有缓存页面，如果把页面都缓存了，那即使修改了 hash 号也获取不到最新的，也是用的缓存的
- * 所以一般html页面不要缓存
+ * 所以一般html页面不要缓存，cache-control: no-cache, no-store, max-age=0, must-revalidate
  * 
  * Cache-Control: max-age=3600，缓存一小时
  * max-age=3600，缓存一小时
