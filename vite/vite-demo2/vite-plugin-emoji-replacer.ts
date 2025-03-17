@@ -15,5 +15,10 @@ export function VitePluginEmojiReplacer(): Plugin {
       }
       return finallyCode
     },
+    transformIndexHtml(html, ctx) {
+      console.log(html) // index.html
+      // console.log(ctx)
+      console.log("--------------")
+    }
   }
 }
