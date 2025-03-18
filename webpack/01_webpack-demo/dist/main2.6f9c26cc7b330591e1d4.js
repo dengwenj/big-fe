@@ -1,0 +1,1 @@
+!function(){"use strict";console.log("第二个入口点")}();
