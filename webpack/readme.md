@@ -189,3 +189,22 @@ export default class CustomPlugin {
   }
 }
 ```
+
+### Webpack5 核心执行过程，主要包括以下几个阶段
+1. 初始化阶段：
+  - 创建 Webpack 实例：创建一个 Webpack 实例并加载用户的配置文件 webpack.config.js
+  - 配置解析：解析配置文件，处理配置中的 entry（入口），output（输出），module（模块规则这里面写一些 loader），plugins 等配置项
+2. 编译阶段：
+  - 创建 Compiler 实例：在初始化阶段，Webpack 会基于配置文件创建 Compiler 实例，Compiler 是 Webpack 的核心对象，负责处理整个构建过程
+  - 处理模块：Webpack 会根据 entry 配置项从入口文件开始，递归处理所有依赖的模块
+  - 加载文件：通过 loaders 处理文件（例如：将 scss 转换成 css，将 jsx 转换成 js 等）
+  - 模块解析：Webpack 会根据配置的 resolve 选项解析模块路径
+3. 构建阶段：
+  - 生成模块：所有模块都被打包成一个个的 chunk(代码块)，并最终生成输出文件
+  - 执行插件钩子：Webpack 提供了大量的钩子供插件插入自己的操作，如 emit，done，afterEmit 等
+4. 输出阶段：
+  - 生成输出文件：根据 output 配置生成最终的打包文件
+  - 执行插件钩子：如 done 在整个编译过程完成之后触发，可用来记录编译结果或执行一些收尾工作。
+- 初始化 -> 编译 -> 构建 -> 输出
+
+### TODO webpack 和 vite 总结、对比
