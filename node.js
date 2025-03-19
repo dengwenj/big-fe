@@ -33,27 +33,27 @@
 //   console.log(`Server is running at http://localhost:${port}`);
 // });
 
-const myMap = new Map();
-let obj = { name: 'John' };
-myMap.set('key', obj);
+// const myMap = new Map();
+// let obj = { name: 'John' };
+// myMap.set('key', obj);
 
-// 错误：创建了一个新的对象并覆盖了原来的引用
-obj = { ...obj, age: 30 };
-myMap.set('key', obj);
-// 这里 myMap 中的对象还是原来的对象，没有新属性
+// // 错误：创建了一个新的对象并覆盖了原来的引用
+// obj = { ...obj, age: 30 };
+// myMap.set('key', obj);
+// // 这里 myMap 中的对象还是原来的对象，没有新属性
 
-// 正确：直接在 Map 中存储的对象上添加属性
-// myMap.get('key').age = 30;
+// // 正确：直接在 Map 中存储的对象上添加属性
+// // myMap.get('key').age = 30;
 
-// 遍历 Map
-myMap.forEach((value, key) => {
-  console.log(`${key}:`, value);
-});
+// // 遍历 Map
+// myMap.forEach((value, key) => {
+//   console.log(`${key}:`, value);
+// });
 
-const p1 = Promise.resolve('首饰')
-const p2 = new Promise((resolve) => {
-  resolve(p1)
-})
+// const p1 = Promise.resolve('首饰')
+// const p2 = new Promise((resolve) => {
+//   resolve(p1)
+// })
 
-console.log(p1)
-console.log(p2)
+// console.log(p1)
+// console.log(p2)
