@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunk_01_webpack_demo=self.webpackChunk_01_webpack_demo||[]).push([[498],{498:function(e,c,n){n.r(c),n.d(c,{sum:function(){return u}});const u=(e,c)=>e+c}}]);

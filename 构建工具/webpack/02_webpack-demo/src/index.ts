@@ -1,3 +1,5 @@
+import "./index.css"
+
 interface Person {
   name: string
   age: number

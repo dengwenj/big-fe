@@ -112,7 +112,7 @@ resolve: {
   - 用 esbuild 来构建编译 ts、tsx、jsx
   - postcss -> css
   - 需要针对需要打包的资源，做转换处理
-  - vite 的插件 **vite-pluign-xxx** 来转换内容，vite-pluign-vue，vite-pluign-react
+  - vite 的插件 **vite-plugin-xxx** 来转换内容，vite-plugin-vue，vite-plugin-react
   - 优化
     - 已经编译的内容缓存
     - 增量编译

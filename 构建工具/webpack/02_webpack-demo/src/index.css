@@ -1,0 +1,21 @@
+body {
+  background-color: aqua;
+}
+html {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#app {
+  height: 100%;
+}
+
+
+ul, ol, li {
+  list-style: none;
+}
+
+i, em {
+  font-style: normal;
+}

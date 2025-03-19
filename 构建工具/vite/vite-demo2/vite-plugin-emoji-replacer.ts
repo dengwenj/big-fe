@@ -11,11 +11,14 @@ export function VitePluginEmojiReplacer(): Plugin {
       if (id.includes('App.vue')) {
         finallyCode = code.replace(/:smiley:/g, '😄') 
         ids.push(id)
-        console.log(ids, ids.length)
       }
+      console.log("VitePluginEmojiReplacer transform...")
       return finallyCode
     },
-    transformIndexHtml(html, ctx) {
+    generateBundle() {
+      console.log("VitePluginEmojiReplacer generateBundle...")
+    },
+    transformIndexHtml(html) {
       console.log(html) // index.html
       // console.log(ctx)
       console.log("--------------")

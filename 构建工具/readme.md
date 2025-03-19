@@ -1,0 +1,88 @@
+### Webpack 和 Vite 总结、对比
+1. 设计理念
+  - Webpack：Webpack 是一个功能强大且高度可配置的模块打包工具，它将项目中的所有资源（如 JavaScript、CSS、图片等）都视为模块，通过各种 loader 和 plugin 对这些模块进行处理和打包，最终生成优化后的静态资源文件。其核心思想是**将项目中的所有资源都打包成一个或多个文件，以减少浏览器的请求次数，提高页面加载性能**。
+  - Vite：Vite 是一个基于原生 ES 模块导入的构建工具，它利用现代浏览器对 ES 模块的支持，在开发环境中无需打包，直接以原生 ES 模块的方式提供文件，从而实现快速的冷启动和热更新，通过 esbuild 进行对浏览器不认识的模块进行编译处理。在生产环境中，Vite 会使用 Rollup 进行打包，以生成优化后的静态资源文件。其设计理念是追求极致的开发体验，通过减少不必要的打包过程，提高开发效率。
+  - webpack 核心理念是：bundle，将项目中的所有资源都打包成一个或多个文件，以减少浏览器的请求次数，提高页面加载性能
+  - vite 有个核心理念是：**bundleless**（esm）基于浏览器支持 esm 的特性，少打包，提高性能
+
+2. 构建性能
+  - 开发环境
+    - Webpack：在启动开发服务器时，Webpack 需要对整个项目进行打包，这可能会导致较长的启动时间。尤其是在项目规模较大时，启动时间会显著增加。此外，Webpack 的热更新也需要重新打包受影响的模块，这可能会导致热更新速度较慢。
+    - Vite：由于 Vite 在开发环境中无需打包，直接以原生 ES 模块的方式提供文件，因此启动速度非常快。即使在大型项目中，也能实现秒级启动。同时，Vite 的热更新只需要更新受影响的模块，无需重新打包整个项目，因此热更新速度极快，几乎可以实现即时更新。
+  - 生产环境
+    - Webpack：Webpack 在生产环境中经过多年的发展和优化，拥有丰富的插件生态系统，可以对代码进行深度优化，如**代码分割、压缩、Tree Shaking** 等，生成的打包文件性能较好。
+    - Vite：Vite 在生产环境中使用 Rollup 进行打包，Rollup 本身也是一个优秀的打包工具，能够生成高质量的打包文件。同时，Vite 也提供了一些默认的优化配置，如代码分割、压缩等，生成的打包文件性能与 Webpack 相当。
+
+3. 生态系统
+  - Webpack 有大量的 loader 和 plugin 可供选择
+  - Vite 自定义 plugin 可供选择
+
+4. vite plugin
+  - vite 插件本质上是一个对象，它定义了一个接口(规范)必须实现它的接口包含了多个钩子函数
+  - vite 插件的执行顺序（多个插件）(先前往后)
+  ```js
+  plugins: [vue(), VitePluginEmojiReplacer(), VitePluginPort()],
+  ```
+
+5. webpack loader
+  - Webpack Loader 的本质是一个函数，它是 Webpack 实现模块处理功能的核心机制，用于对不同类型的文件进行转换，使得 Webpack 能够处理除 JavaScript 之外的各种资源文件
+  - Webpack Loader 具体执行时机是在**模块解析之后** **模块构建之前**
+  - webpack 的 loader 的执行顺序（多个）
+    - 在 Webpack 里，多个 loader 的执行顺序是从右到左、默认从上到下，可以用 enforce: 'pre' 来设置
+    ```js
+    // 从右到左、从上到下
+    module.exports = {
+      module: {
+          rules: [
+              {
+                  test: /\.less$/, // 规则
+                  use: ['style-loader', 'css-loader', 'less-loader']
+                  // enforce: 'pre', // 先执行
+              },
+              {
+                  test: /\.css$/,
+                  use: ['style-loader', 'css-loader'],
+                  // enforce: 'post', // 最后执行
+              }
+          ]
+      }
+    };
+    ```
+
+6. webpack plugin
+  - webpack plugin 本质是对象，它定义了一个接口(规范)必须实现它的接口，包含了多个钩子函数，这个特定接口主要围绕 apply 方法展开，插件通过该方法接入 Webpack 构建流程，并且会使用到 Webpack 提供的 compiler 和 compilation 对象上的钩子来实现具体功能。
+  - webpack plugin 的执行顺序**从上往下**
+  ```js
+  export default {
+    plugins: [
+      new CustomPlugin({
+        name: '朴睦',
+        age: 25
+      }),
+      {
+        apply(complier) {
+          console.log(complier, 'webpack plugin 本质是对象')
+        }
+      }
+    ],
+  }
+  ```
+
+7. 性能优化
+  - webpack optimization 配置
+  ```js
+  // 代码压缩 代码拆分，代码合并  
+  // 优化相关的
+  optimization: {
+    // 压缩
+    minimize: true,
+    // chunk 拆分细节
+    splitChunks: {
+      chunks: 'all'
+    }
+  },
+  ```
+  - 代码拆分
+   - 代码拆分几种方式：1、动态导入(自动切分)，2、设置多个入口点
+  - Tree Shaking 移除未使用的代码
+  - 为静态资源添加内容哈希，便于缓存管理

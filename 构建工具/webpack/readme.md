@@ -206,5 +206,3 @@ export default class CustomPlugin {
   - 生成输出文件：根据 output 配置生成最终的打包文件
   - 执行插件钩子：如 done 在整个编译过程完成之后触发，可用来记录编译结果或执行一些收尾工作。
 - 初始化 -> 编译 -> 构建 -> 输出
-
-### TODO webpack 和 vite 总结、对比
