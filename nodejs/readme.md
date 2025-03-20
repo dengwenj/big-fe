@@ -96,3 +96,74 @@ console.log("script end")
 - npm ci 无法单独安装某一个依赖包，只能一次安装整个项目的所有依赖包
 - 如果 package.json 和 package-lock.json 文件产生冲突，npm ci 会直接报错，并不会更新 lock 文件
 - npm ci 是非常稳定的安装方式，完全不会改变 package.json 和 lock 文件
+
+### js 垃圾回收，是如何实现的
+- 引用计数
+  - a -> 有多少引用了它
+  - 弊端： a 引用了 b，b 引用了 a
+- 标记清除
+  - 从 GC Root 根节点上，一层一层往下走，能索引到的，就是不回收的
+
+### process
+- process.argv 可以拿到一些参数，node index.js pumu hmm 可以拿到 pumu 和 hmm 这两个参数
+- process.cwd() 可以拿到命令行运行的地址
+
+### 开启子进程
+```js
+// master
+const childProcess = require('child_process')
+
+// 开启子进程
+const processMaster = childProcess.fork(__dirname + "/child.js")
+
+// 向子进程发送消息
+processMaster.send("你好")
+
+// 父进程中接收子进程的消息
+processMaster.on('message', (data) => {
+  console.log(data)
+})
+
+// child
+process.on('message', (data) => {
+  // 父进程给子进程发送的消息
+  console.log(data)
+})
+```
+- 使用子进程开启一个 web 服务
+```js
+const childProcess = require('child_process')
+const path = require('path')
+
+const cp = childProcess.spawn('node', ['childProcess.js', 'pumu', 'ww'], {
+  cwd: path.resolve(__dirname)
+})
+
+cp.stdout.on('data', (data) => {
+  console.log(`子进程标准输出：\n${data.toString()}`);
+});
+
+// 监听子进程退出事件
+cp.on('close', (code) => {
+  console.log(`spawn 创建的子进程已退出，退出码: ${code}`);
+});
+
+
+// childProcess.js 文件
+const http = require('http')
+
+const server = http.createServer()
+
+server.on('request', (req, res) => {
+  res.end("hello world")
+})
+
+server.listen(3002, () => {
+  console.log("子进程里服务器启动成功")
+  // console.log(process.argv)
+})
+
+setTimeout(() => {
+  process.exit()
+}, 3000);
+```
