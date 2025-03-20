@@ -195,7 +195,7 @@ function myRequire(filename) {
   };
 
   // 将模块添加到缓存中
-  moduleCache[filename] = module;
+  moduleCache[filename] = module.exports;
 
   const fn = new Function('require', 'module', 'exports', warpped);
   fn(myRequire, module, module.exports);
@@ -203,4 +203,75 @@ function myRequire(filename) {
   return module.exports;
 }
 myRequire('./childProcess.js')
+```
+
+### readfile 和 createReadStream 有什么区别
+- readfile：异步的文件读取函数，读取的内容是一次性读取，存储在内存中，再传给用户
+- createReadStream： 可读流，逐块的读取文件，而不是一次性全部放在内存
+
+### 发布订阅
+```js
+class EventEmitter {
+  constructor() {
+    // key 存的是事件名，val 存的是数组 元素是回调函数
+    this.event = {}
+  }
+
+  on(type, cb) {
+    if (this.event[type]) {
+      this.event[type].push(cb)
+    } else {
+      this.event[type] = [cb]
+    }
+  }
+
+  emit(type, ...args) {
+    if (!this.event[type]) {
+      return
+    }
+
+    for (const cb of this.event[type]) {
+      cb.call(this, ...args)
+    }
+  }
+
+  once(type, cb) {
+    const wrap = (...args) => {
+      cb.call(this, ...args)
+      this.off(type, wrap)
+    }
+    this.on(type, wrap)
+  }
+
+  off(type, cb) {
+    if (!this.event[type]) {
+      return
+    }
+    // 删除掉 cb
+    this.event[type] = this.event[type].filter((item) => item !== cb)
+
+    if (this.event[type].length === 0) {
+      delete this.event[type]
+    }
+  }
+}
+
+const e = new EventEmitter()
+
+const first = (a, b, c) => {
+  console.log('第一个的：' + a, b, c)
+}
+e.on('pumu', first)
+
+e.on('pumu', (a, b, c) => {
+  console.log('第二个的：' + a, b, c)
+})
+
+e.once('pumu', (a, b, c) => {
+  console.log('once：' + a, b, c)
+})
+
+e.emit('pumu', 'a', 'b', 'c')
+e.off('pumu', first)
+e.emit('pumu', 'd', 'w', 'j')
 ```
