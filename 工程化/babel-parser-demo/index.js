@@ -4,7 +4,7 @@ import generator from '@babel/generator' // 代码生成
 
 const code = 'const name = pumu'
 
-// 经过语法分析生产 ast
+// 经过词法分析生产 ast，就是语法分析
 const ast = parser.parse(code)
 
 // 访问器
@@ -15,7 +15,7 @@ const visitor = {
     }
   }
 }
-// 转换
+// 转换，语义分析
 traverse.default(ast, visitor)
 
 // 生成

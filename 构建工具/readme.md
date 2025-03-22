@@ -94,3 +94,14 @@
   - 配置：别名、代理、插件开发。
   - 实践：（CSS Modules、TypeScript、SSR vite内部就支持）、性能优化。
   - 记忆技巧：结合 Vite 的设计理念（“原生 ESM 优先”）理解其机制，对比 Webpack 的传统打包模式，突出 “轻量” 和 “高效” 的特点。
+
+9. Webpack 本身仅能理解 JavaScript 和 JSON 文件，对于其他类型的文件，它需要借助 loader 来进行处理。loader 是一种转换器，能把不同类型的文件转换为 Webpack 可以处理的模块。
+  - 自定义 loader 返回的值通常是一段可执行的 JavaScript 代码，用于执行副作用操作、注册全局变量或模块、动态加载其他资源等，这些代码会在打包后的 JavaScript 文件中被执行。
+  ```js
+  module.exports = function customLoader(source) {
+    // 假设这里对 source 进行了处理，得到了处理结果
+    const processedData = `Processed: ${source}`;
+    return `export { data: '${processedData}' };`; // esm
+    return `module.exports = { data: '${processedData}' };`; // commonjs
+  };
+  ```
