@@ -186,3 +186,46 @@
 11. 生成压缩代码文件(gz、br)
   - 文件体积减少。浏览器请求的是压缩文件，使得 速度增快，资源耗费减少
   - 分包 + 响应给浏览器压缩文件，不是源文件。使得文件体积再次缩小，性能再次提升
+  ```js
+  // vite
+  plugins: [
+    viteCompression({
+        // 开启 gzip 压缩
+        algorithm: 'gzip',
+        // 生成 .gz 文件
+        ext: '.gz',
+        // 仅对大于 1kb 的文件进行压缩
+        threshold: 1024,
+    }),
+    viteCompression({
+        // 开启 brotli 压缩
+        algorithm: 'brotliCompress',
+        // 生成 .br 文件
+        ext: '.br',
+        threshold: 1024,
+    })
+  ]
+
+  // webpack
+  plugins: [
+    // gzip 压缩
+    new CompressionPlugin({
+      filename: '[path][base].gz', // 输出的文件名
+      algorithm: 'gzip', // 使用 gzip 压缩
+      test: /\.(js|css|html|svg)$/, // 匹配需要压缩的文件类型
+      threshold: 10240, // 只压缩大于 10KB 的文件
+      minRatio: 0.8, // 只有压缩率低于 0.8 的文件才会被压缩
+    }),
+    // Brotli 压缩
+    new CompressionPlugin({
+      filename: '[path][base].br', // 输出的文件名
+      algorithm: 'brotliCompress', // 使用 Brotli 压缩
+      test: /\.(js|css|html|svg)$/, // 匹配需要压缩的文件类型
+      compressionOptions: {
+        level: 11, // Brotli 压缩级别，范围是 0-11
+      },
+      threshold: 10240, // 只压缩大于 10KB 的文件
+      minRatio: 0.8, // 只有压缩率低于 0.8 的文件才会被压缩
+    }),
+  ]
+  ```
