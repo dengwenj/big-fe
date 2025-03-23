@@ -105,3 +105,84 @@
     return `module.exports = { data: '${processedData}' };`; // commonjs
   };
   ```
+
+10. 分包策略（通过多种分包策略可以有效减少包的体积，提高应用性能）
+  - webpack，使用 optimization.splitChunks.cacheGroups 拆分到单独的文件中去，减少体积，拆分公共代码，SplitChunksPlugin 内置的插件
+  ```js
+  optimization: {
+    // 对代码进行分割，将代码拆分成更小的块，从而实现按需加载，减少首屏加载时间，提高应用性能
+    splitChunks: {
+      maxAsyncRequests: 30, // 增加异步加载的最大请求数
+      maxInitialRequests: 30, // 增加初始加载的最大请求数
+      // 具体怎么拆分，拆分到单独的文件中去，减少体积，还有复用
+      cacheGroups: {
+        // vendors: {
+        //   test: /[\\/]node_modules[\\/]/,
+        //   name: 'vendors',
+        //   priority: 10,
+        //   // 对哪些类型的代码块应用当前缓存组规则进行指定。
+        //   // 可以是 'initial'（只处理初始加载的代码块）、'async'（只处理异步加载的代码块）或者 'all'（处理所有代码块）。
+        //   chunks: 'initial'
+        // },
+        // 公共的依赖指的是在多个模块或文件中被重复使用的代码或第三方库。这些依赖通常会被打包到单独的文件中，
+        // 以便在多个页面或组件之间共享，从而减少重复代码，优化加载性能
+        'ant-design-vue': {
+          // 匹配 ant-design-vue 模块
+          test: /[\\/]node_modules[\\/]ant-design-vue[\\/]/,
+          // 代码块名称
+          name: 'ant-design-vue',
+          // 对所有类型的块进行分割
+          chunks: 'all',
+          // priority: -10
+        },
+        'element-ui': {
+          // 匹配 ant-design-vue 模块
+          test: /[\\/]node_modules[\\/]element-ui[\\/]/,
+          // 代码块名称
+          name: 'element-ui-test',
+          // 对所有类型的块进行分割
+          chunks: 'all',
+        },
+        // 业务组件的
+        components: {
+          test(module) {
+            return module.resource && module.resource.includes('src/components')
+          },
+          name: 'components',
+          chunks: 'all',
+        },
+      }
+    }
+  },
+  ```
+  - vite 使用 build.rollupOptions.manualChunks，Vite 使用 Rollup 进行打包。使用 Rollup 的 manualChunks 配置手动进行拆分
+  ```js
+   build: {
+    rollupOptions: {
+      // 排除 Ant Design Vue，不进行打包，使用 cdn 引入
+      // external: ['ant-design-vue'],
+      manualChunks(id) {
+        if (id.includes('node_modules')) {
+          // 拆分第三方依赖
+          if (id.includes('ant-design-vue')) {
+            return 'ant-design-vue';
+          }
+          return 'vendor'; // 其他依赖打包到 vendor，避免拆分过细 导致 HTTP 请求过多
+          // // 按包名精细化拆分
+          // const packageName = id.match(/node_modules\/(.+?)\//)?.[1]
+          // return packageName ? `vendor/${packageName}` : 'vendor'
+        }
+        if (id.includes('src/views')) {
+          return 'views'
+        }
+        if (id.includes('src/components')) {
+          return 'components'
+        }
+      }
+    }
+  }
+  ```
+
+11. 生成压缩代码文件(gz、br)
+  - 文件体积减少。浏览器请求的是压缩文件，使得 速度增快，资源耗费减少
+  - 分包 + 响应给浏览器压缩文件，不是源文件。使得文件体积再次缩小，性能再次提升
