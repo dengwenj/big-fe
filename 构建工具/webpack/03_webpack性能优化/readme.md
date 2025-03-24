@@ -33,3 +33,21 @@
       noParse: /jquery/
     }
     ```
+2. 优化 loader 性能
+  - 进一步限制 loader 的应用范围
+  - 通过 module.rule.exclude 或 module.rule.include，排除或进包含需要应用 loader 的场景
+  ```js
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        // 排除
+        // exclude: /lodash/
+        exclude: /node_modules/,
+        use: 'babel-loader'
+      }
+    ]
+  }
+  ```
+  - 缓存 loader 的结果
+  - 为 loader 的运行开启多线程，开启和管理线程需要消耗时间，在小型项目中使用 thread-loader 反而会增加构建时间
