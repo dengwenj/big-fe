@@ -1,6 +1,12 @@
+const path = require('path')
+const HTMLPlugin = require('html-webpack-plugin')
+
 module.exports = {
   mode: 'development',
   devtool: 'source-map',
+  devServer: {
+    // contentBase: path.join(__dirname, 'public')
+  },
   module: {
     // 哪些模块不需要解析
     noParse: /jquery/,
@@ -16,5 +22,10 @@ module.exports = {
         use: ['./cssLoader.js','css-loader']
       }
     ]
-  }
+  },
+  plugins: [
+    new HTMLPlugin({
+      template: './public/index.html'
+    })
+  ]
 }
