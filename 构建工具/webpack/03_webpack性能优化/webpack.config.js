@@ -9,6 +9,11 @@ module.exports = {
         test: /\.js$/,
         use: './custom-loader.js',
         exclude: /node_modules/
+      },
+      {
+        test: /\.css$/,
+        // use: './cssLoader.js'
+        use: ['./cssLoader.js','css-loader']
       }
     ]
   }

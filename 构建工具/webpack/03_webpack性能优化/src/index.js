@@ -1,3 +1,5 @@
-import $ from 'jquery'
+// import $ from 'jquery'
+import a from './a'
+import './b.css'
 
-console.log($)
+console.log(a)

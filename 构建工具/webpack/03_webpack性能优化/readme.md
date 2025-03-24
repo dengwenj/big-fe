@@ -33,7 +33,7 @@
       noParse: /jquery/
     }
     ```
-2. 优化 loader 性能
+2. **优化 loader 性能**
   - 进一步限制 loader 的应用范围
   - 通过 module.rule.exclude 或 module.rule.include，排除或进包含需要应用 loader 的场景
   ```js
@@ -51,3 +51,12 @@
   ```
   - 缓存 loader 的结果
   - 为 loader 的运行开启多线程，开启和管理线程需要消耗时间，在小型项目中使用 thread-loader 反而会增加构建时间
+
+3. HMR 热替换
+ - webpack dev server 每次都要重新打包吗？
+  - 开启热更新（Hot Module Replacement，HMR）
+    - 当开启热更新功能时，webpack-dev-server 可以在不重新打包整个项目的情况下更新发生变化的模块。
+    - 原理：webpack 会追踪模块之间的依赖关系并构建依赖图。当监测到文件变化时，它会根据依赖图确定哪些模块受影响，仅重新编译这些受影响的模块，然后将更新后的模块代码发送到浏览器（websocket）。浏览器中的 HMR 运行时会接收这些更新，并用新模块替换旧模块，而无需刷新整个页面。
+  - 未开启热更新
+    - 若未开启热更新，webpack-dev-server 在检测到文件变化时，会重新打包整个项目并刷新浏览器页面。
+    - 原理：由于没有 HMR 机制来单独更新模块，当文件变化时，webpack 会重新从入口文件开始解析所有模块，生成新的打包文件，然后通知浏览器重新加载页面以显示最新的打包结果。
