@@ -2,8 +2,9 @@ const path = require('path')
 const HTMLPlugin = require('html-webpack-plugin')
 
 module.exports = {
-  mode: 'development',
-  devtool: 'source-map',
+  // mode: 'development',
+  entry: './src/index.js',
+  // devtool: 'source-map',
   devServer: {
     // contentBase: path.join(__dirname, 'public')
   },

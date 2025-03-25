@@ -1,5 +1,6 @@
 // import $ from 'jquery'
-import a from './a'
+import { foo } from './a'
 import './b.css'
 
-console.log(a)
+// console.log(a)
+foo()
