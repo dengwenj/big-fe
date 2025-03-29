@@ -35,14 +35,33 @@
       - 缺点：需要 webpack5
 
 ### micro-app
+- **通过js沙箱、样式隔离、元素隔离、路由隔离模拟实现了ShadowDom的隔离特性(自己去实现的)，并结合CustomElement将微前端封装成一个类WebComponent组件**
+- 利用了 CustomElement 的一系列钩子方法，在对应的时机做对应的事（比如在 connectedCallback 去挂载子应用）
 - 使用的时 WebComponent 方案，把应用变成一个自定义元素运用进来
 - **micro-app 和 wujie 核心是应用变成自定义元素，插入到基座中**
 - **formHTML** 对 html 进行处理
 - 执行流程
-  1. 对于 micro-app，它里面的核心是创建一个 WebComponent
+  1. 对于 micro-app，它里面的核心是创建一个 WebComponent（自定义元素 CustomElement）
   2. 获取 html，将模版放到 WebComponent 中
   3. css 做作用域隔离，js 做 proxy 沙箱（function (window){width(window)}）(proxyWindow) new Function
+    - 把 link 标签请求的 css 数据，放到了 style 标签的内容中（一个 link 标签对应一个 style 标签，会添加 scoped css 隔离）
+    - 把 script 标签请求的 js 数据拿到，用 new Function 的形式去执行（new Function 传入 js 字符串），做到 js 隔离(在 function 里面)，proxyWindow
+    - **ProxyWindow** 本质上是基于 Proxy 对象创建的一个代理窗口对象，它的主要目的是对 window 对象的访问进行拦截和控制，进而达成 JavaScript 沙箱和部分 DOM 隔离的效果。
   4. 执行完毕后应用可以正常挂载
+- micro-app 是自己实现的 css 隔离和 js 隔离
+- 元素隔离：micro-app 会为每个子应用创建一个独立的虚拟 DOM 容器，子应用的所有 DOM 操作都在这个容器内部进行。这个容器就像是一个沙箱，将子应用与主应用的 DOM 隔离开来。
+```js
+document.querySelector = function(selector) {
+  // 假设子应用的 DOM 容器是 subAppContainer
+  const subAppContainer = document.getElementById('sub-app-container');
+  return subAppContainer.querySelector(selector);
+};
+```
+- 路由隔离：micro-app 通常会为每个微应用分配一个独立的路径前缀。唯一的值
+
+### wujie
+- 
+
 ```html
 <!DOCTYPE html>
 <html lang="en">
