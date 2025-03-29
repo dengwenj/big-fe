@@ -34,9 +34,15 @@
       - 无 css 沙箱和 js 沙箱
       - 缺点：需要 webpack5
 
-### micro-app 和 无界
+### micro-app
 - 使用的时 WebComponent 方案，把应用变成一个自定义元素运用进来
 - **micro-app 和 wujie 核心是应用变成自定义元素，插入到基座中**
+- **formHTML** 对 html 进行处理
+- 执行流程
+  1. 对于 micro-app，它里面的核心是创建一个 WebComponent
+  2. 获取 html，将模版放到 WebComponent 中
+  3. css 做作用域隔离，js 做 proxy 沙箱（function (window){width(window)}）(proxyWindow) new Function
+  4. 执行完毕后应用可以正常挂载
 ```html
 <!DOCTYPE html>
 <html lang="en">
@@ -86,7 +92,7 @@
       </html>
     `
 
-    class MyButton extends HTMLElement {
+    class MyMicro extends HTMLElement {
       // 自定义元素挂载后执行
       connectedCallback() {
         this.name = this.getAttribute('name')
@@ -160,7 +166,7 @@
     })
 
     // 定义一个元素，名字和上面标签的名字一样
-    customElements.define('my-micro', MyButton)
+    customElements.define('my-micro', MyMicro)
 
     setTimeout(() => {
       micro1.setAttribute('type', 'default')

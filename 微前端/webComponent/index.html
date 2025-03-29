@@ -46,7 +46,7 @@
       </html>
     `
 
-    class MyButton extends HTMLElement {
+    class MyMicro extends HTMLElement {
       // 自定义元素挂载后执行
       connectedCallback() {
         this.name = this.getAttribute('name')
@@ -120,7 +120,7 @@
     })
 
     // 定义一个元素，名字和上面标签的名字一样
-    customElements.define('my-micro', MyButton)
+    customElements.define('my-micro', MyMicro)
 
     setTimeout(() => {
       micro1.setAttribute('type', 'default')
