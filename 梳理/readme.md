@@ -15,10 +15,12 @@ TODO Vite 的构建流程
 
 
 
-### 自动注入路由
+### 自动注入路由（约定大于配置）
 - import.meta.glob(['@/views/*/*/index.tsx', '@/views/*/index.tsx'])，生成路径和组件的映射关系
+  - 动态导入指定目录下的所有文件
+  - 支持代码分割和懒加载
 - 根据菜单模块生成的 pageUrl，菜单模块有 children，递归生成路由，根据 pageUrl 去映射表里面找对应的组件
-- 菜单模块可以有同样的 pageUrl(即对应同一个组件)，只要 pageId 不相同就行，根据业务需求做不同的策略，只需要有个标识判断出哪个对应哪个就行
+- 菜单模块可以有同样的 pageUrl(即对应同一个组件)，只要 pageId 不相同就行，根据业务需求做不同的策略，只需要有个标识判断出哪个对应哪个就行（多个菜单共用同一个路由页面）
 - 遇到一个问题就是，不同菜单使用同一个路由页面，缓存会保留第一次打开的路由页面，怎么解决？通过改变 name 的方式解决缓存问题
 ```ts
 import { h } from "vue"
@@ -50,3 +52,5 @@ export default function nameDiffComponent(component: any, route: any) {
 ```
 
 
+
+### 微前端
