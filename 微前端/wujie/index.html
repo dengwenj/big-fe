@@ -6,14 +6,89 @@
   <title>Document</title>
 </head>
 <body>
-  <demo id="demo">
-    <div class="ww">hh</div>
-  </demo>
+
 </body>
 
 <script>
-  const demoApp = document.getElementById('demo')
-  console.log(demoApp, 'demoApp')
-  demoApp.querySelector('.ww')
+  const html = `
+    <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+      </head>
+      <body>
+        <div>你好世界</div>
+        <style>div { background-color: red; color: #fff; }</style>
+      </body>
+    </html>
+  `
+
+  const script = `
+    const iframeVar = 10
+    console.log(iframeVar)
+    console.log(document.querySelector('div'))
+  `
+
+  const wujieEl = document.createElement('wujie-app')
+  document.body.appendChild(wujieEl)
+
+  function createIframe() {
+    const iframeEl = document.createElement('iframe')
+    document.body.appendChild(iframeEl)
+    return iframeEl
+  }
+
+  function createSandBox() {
+    return {
+      iframe: createIframe(),
+      shadow: null
+    }
+  }
+
+  class Wujie extends HTMLElement {
+    connectedCallback() {
+      // 1. 创建沙箱
+      const sandBox = createSandBox()
+
+      // 2. 创建 shadowDOM
+      sandBox.shadow = this.attachShadow({ mode: 'open' })
+
+      // 3. 将 html、css 放入到 shadowDOM
+      const wrapEl = document.createElement('html')
+      wrapEl.innerHTML = html
+      sandBox.shadow.appendChild(wrapEl)
+
+      // 4. 将 js 放入沙箱执行
+      const iframeWindow = sandBox.iframe.contentWindow
+      const scriptEl = iframeWindow.document.createElement('script')
+      scriptEl.textContent = script
+
+      // 我们希望在脚本执行之前，有些方法用的是父应用的
+      // document.querySelector 变成 shadowRoot
+      // 添加弹窗的时候 document.createElement().appendChild() -> 代理到全局的 window 上
+      // iframe 中的路由管理 也会同步到主应用上
+      // 将 iframe 的 document 代理到 WebComponent
+      Object.defineProperty(iframeWindow.document, 'querySelector', {
+        get() {
+          // iframeWindow.document.querySelector -> sandBox.shadow.querySelector
+          // return function(arg) {
+          //   return sandBox.shadow['querySelector'].apply(sandBox.shadow, arg)
+          // }
+          return new Proxy(sandBox.shadow['querySelector'], {
+            apply(target, thisArg, arg) {
+              // target = sandBox.shadow.querySelector
+              return target.apply(sandBox.shadow, arg)
+            }
+          })
+        }
+      })
+
+      iframeWindow.document.body.appendChild(scriptEl)
+    }
+  }
+  // 创建自定义标签
+  customElements.define('wujie-app', Wujie)
 </script>
 </html>

@@ -12,56 +12,29 @@
 - 采用何种方案进行应用拆分？（拆分了之后还要接入到基座）
 - 采用何种方式进行应用通信？
 - 应用之间如何进行隔离？
-  #### 具体方案
-    1. iframe
-      - 微前端的最简单方案，通过 iframe 加载子应用
-      - 通信可以通过 postMessage 进行通信
-      - 完美的沙箱机制自带应用隔离
-      - 缺点：用户体验差（弹窗只能在 iframe 中、在内部切换刷新就会丢失状态）
-    2. Web Components
-      - 将前端应用程序分解为自定义 HTML 元素
-      - 基于 CustomEvent 实现通信
-      - Shadow DOM 天生的作用域隔离
-      - 缺点：浏览器支持问题、学习成本、调式困难、修改样式困难等问题
-    3. single-spa
-      - single-spa 通过路由劫持实现应用的加载（采用 Systemjs），提供应用间公共组件加载及公共业务逻辑处理。子应用需要暴露固定的钩子（bootstrap、mount、unmount）
-      - 基于 props 主子应用间通信
-      - 无沙箱机制，需要自己实现 js 沙箱以及 css 沙箱
-      - 缺点：学习成本、无沙箱机制、需要对原有的应用进行改造、子应用间相同资源重复加载问题
-    4. Module federation（模块联邦）
-      - 通过模块联邦将组件进行打包导出使用
-      - 共享模块的方式进行通过
-      - 无 css 沙箱和 js 沙箱
-      - 缺点：需要 webpack5
+#### 具体方案
+- iframe
+  - 微前端的最简单方案，通过 iframe 加载子应用
+  - 通信可以通过 postMessage 进行通信
+  - 完美的沙箱机制自带应用隔离
+  - 缺点：用户体验差（弹窗只能在 iframe 中、在内部切换刷新就会丢失状态）
+- Web Components
+  - 将前端应用程序分解为自定义 HTML 元素
+  - 基于 CustomEvent 实现通信
+  - Shadow DOM 天生的作用域隔离
+  - 缺点：浏览器支持问题、学习成本、调式困难、修改样式困难等问题
+- single-spa
+  - single-spa 通过路由劫持实现应用的加载（采用 Systemjs），提供应用间公共组件加载及公共业务逻辑处理。子应用需要暴露固定的钩子（bootstrap、mount、unmount）
+  - 基于 props 主子应用间通信
+  - 无沙箱机制，需要自己实现 js 沙箱以及 css 沙箱
+  - 缺点：学习成本、无沙箱机制、需要对原有的应用进行改造、子应用间相同资源重复加载问题
+- Module federation（模块联邦）
+  - 通过模块联邦将组件进行打包导出使用
+  - 共享模块的方式进行通过
+  - 无 css 沙箱和 js 沙箱
+  - 缺点：需要 webpack5
 
-### micro-app
-- **通过js沙箱、样式隔离、元素隔离、路由隔离模拟实现了ShadowDom的隔离特性(自己去实现的)，并结合CustomElement将微前端封装成一个类WebComponent组件**
-- 利用了 CustomElement 的一系列钩子方法，在对应的时机做对应的事（比如在 connectedCallback 去挂载子应用）
-- 使用的时 WebComponent 方案，把应用变成一个自定义元素运用进来
-- **micro-app 和 wujie 核心是应用变成自定义元素，插入到基座中**
-- **formHTML** 对 html 进行处理
-- 执行流程
-  1. 对于 micro-app，它里面的核心是创建一个 WebComponent（自定义元素 CustomElement）
-  2. 获取 html，将模版放到 WebComponent 中
-  3. css 做作用域隔离，js 做 proxy 沙箱（function (window){width(window)}）(proxyWindow) new Function
-    - 把 link 标签请求的 css 数据，放到了 style 标签的内容中（一个 link 标签对应一个 style 标签，会添加 scoped css 隔离）
-    - 把 script 标签请求的 js 数据拿到，用 new Function 的形式去执行（new Function 传入 js 字符串），做到 js 隔离(在 function 里面)，proxyWindow
-    - **ProxyWindow** 本质上是基于 Proxy 对象创建的一个代理窗口对象，它的主要目的是对 window 对象的访问进行拦截和控制，进而达成 JavaScript 沙箱和部分 DOM 隔离的效果。
-  4. 执行完毕后应用可以正常挂载
-- micro-app 是自己实现的 css 隔离和 js 隔离
-- 元素隔离：micro-app 会为每个子应用创建一个独立的虚拟 DOM 容器，子应用的所有 DOM 操作都在这个容器内部进行。这个容器就像是一个沙箱，将子应用与主应用的 DOM 隔离开来。
-```js
-document.querySelector = function(selector) {
-  // 假设子应用的 DOM 容器是 subAppContainer
-  const subAppContainer = document.getElementById('sub-app-container');
-  return subAppContainer.querySelector(selector);
-};
-```
-- 路由隔离：micro-app 通常会为每个微应用分配一个独立的路径前缀。唯一的值
-
-### wujie
-- 
-
+### WebComponent
 ```html
 <!DOCTYPE html>
 <html lang="en">
@@ -193,6 +166,136 @@ document.querySelector = function(selector) {
     }, 1000)
    </script>
 </body>
+</html>
+```
+
+### micro-app
+- **通过js沙箱、样式隔离、元素隔离、路由隔离模拟实现了ShadowDom的隔离特性(自己去实现的)，并结合CustomElement将微前端封装成一个类WebComponent组件**
+- 利用了 CustomElement 的一系列钩子方法，在对应的时机做对应的事（比如在 connectedCallback 去挂载子应用）
+- 使用的时 WebComponent 方案，把应用变成一个自定义元素运用进来
+- **micro-app 和 wujie 核心是应用变成自定义元素，插入到基座中**
+- **formHTML** 对 html 进行处理
+- 执行流程
+  1. 对于 micro-app，它里面的核心是创建一个 WebComponent（自定义元素 CustomElement）
+  2. 获取 html，将模版放到 WebComponent 中
+  3. css 做作用域隔离，js 做 proxy 沙箱（function (window){width(window)}）(proxyWindow) new Function
+    - 把 link 标签请求的 css 数据，放到了 style 标签的内容中（一个 link 标签对应一个 style 标签，会添加 **scoped** css 隔离）
+    - 把 script 标签请求的 js 数据拿到，用 new Function 的形式去执行（new Function 传入 js 字符串），做到 js 隔离(在 function 里面)，proxyWindow
+    - **ProxyWindow** 本质上是基于 Proxy 对象创建的一个代理窗口对象，它的主要目的是对 window 对象的访问进行拦截和控制，进而达成 JavaScript 沙箱和部分 DOM 隔离的效果。
+  4. 执行完毕后应用可以正常挂载
+- micro-app 是自己实现的 css 隔离和 js 隔离
+- 元素隔离：micro-app 会为每个子应用创建一个独立的虚拟 DOM 容器，子应用的所有 DOM 操作都在这个容器内部进行。这个容器就像是一个沙箱，将子应用与主应用的 DOM 隔离开来。
+```js
+document.querySelector = function(selector) {
+  // 假设子应用的 DOM 容器是 subAppContainer
+  const subAppContainer = document.getElementById('sub-app-container');
+  return subAppContainer.querySelector(selector);
+};
+```
+- 路由隔离：micro-app 通常会为每个微应用分配一个独立的路径前缀。唯一的值
+ 
+### wujie
+- 像 qiankun、micro-app 的 js 都是放到沙箱中跑的（自己实现的）
+- micro-app 中 css 隔离是用 scopedCSS，添加前缀
+- **无界是把 js 放到 iframe 中跑的，css隔离用的 WebComponent 中 shadowRoot，渲染采用 WebComponent（拉取 html 模版 生成自定义组件插入到指定的 dom 中）**
+- shadowRoot 中的 link 标签请求的 css url 返回的数据，放到 style 标签内容中，不会处理，请求回来时什么样的就是什么样的，不和 micro-app 一样。
+- script 标签通过 url 请求的数据，会创建一个 iframe，把响应回来的 js 代码放入到 iframe 的 script 标签的内容中。
+- iframe 怎么和 shadowRoot 进行关联起来呢，就是 iframe 中的 js 代码可能要获取 shadowRoot 中的元素，通过代理的方式就可以关联起来。当访问 iframeWindow.document 进行拦截，然后在拦截的函数里面做一系列处理，最终代理到 shadowRoot 中。
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+
+</body>
+
+<script>
+  const html = `
+    <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+      </head>
+      <body>
+        <div>你好世界</div>
+        <style>div { background-color: red; color: #fff; }</style>
+      </body>
+    </html>
+  `
+
+  const script = `
+    const iframeVar = 10
+    console.log(iframeVar)
+    console.log(document.querySelector('div'))
+  `
+
+  const wujieEl = document.createElement('wujie-app')
+  document.body.appendChild(wujieEl)
+
+  function createIframe() {
+    const iframeEl = document.createElement('iframe')
+    document.body.appendChild(iframeEl)
+    return iframeEl
+  }
+
+  function createSandBox() {
+    return {
+      iframe: createIframe(),
+      shadow: null
+    }
+  }
+
+  class Wujie extends HTMLElement {
+    connectedCallback() {
+      // 1. 创建沙箱
+      const sandBox = createSandBox()
+
+      // 2. 创建 shadowDOM
+      sandBox.shadow = this.attachShadow({ mode: 'open' })
+
+      // 3. 将 html、css 放入到 shadowDOM
+      const wrapEl = document.createElement('html')
+      wrapEl.innerHTML = html
+      sandBox.shadow.appendChild(wrapEl)
+
+      // 4. 将 js 放入沙箱执行
+      const iframeWindow = sandBox.iframe.contentWindow
+      const scriptEl = iframeWindow.document.createElement('script')
+      scriptEl.textContent = script
+
+      // 我们希望在脚本执行之前，有些方法用的是父应用的
+      // document.querySelector 变成 shadowRoot
+      // 添加弹窗的时候 document.createElement().appendChild() -> 代理到全局的 window 上
+      // iframe 中的路由管理也会同步到主应用上，劫持iframe的history.pushState和history.replaceState，就可以将子应用的url同步到主应用的query参数上，当刷新浏览器初始化iframe时，读回子应用的url并使用iframe的history.replaceState进行同步
+
+      // 将 iframe 的 document 代理到 WebComponent
+      Object.defineProperty(iframeWindow.document, 'querySelector', {
+        get() {
+          // iframeWindow.document.querySelector -> sandBox.shadow.querySelector
+          // return function(arg) {
+          //   return sandBox.shadow['querySelector'].apply(sandBox.shadow, arg)
+          // }
+          return new Proxy(sandBox.shadow['querySelector'], {
+            apply(target, thisArg, arg) {
+              // target = sandBox.shadow.querySelector
+              return target.apply(sandBox.shadow, arg)
+            }
+          })
+        }
+      })
+
+      iframeWindow.document.body.appendChild(scriptEl)
+    }
+  }
+  // 创建自定义标签
+  customElements.define('wujie-app', Wujie)
+</script>
 </html>
 ```
 
